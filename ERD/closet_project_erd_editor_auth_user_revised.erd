@@ -1,0 +1,5293 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 6400,
+    "height": 4200,
+    "scrollTop": 0,
+    "scrollLeft": 0,
+    "zoomLevel": 0.7,
+    "show": 511,
+    "database": 4,
+    "databaseName": "closet_project",
+    "canvasType": "ERD",
+    "language": 16,
+    "tableNameCase": 8,
+    "columnNameCase": 8,
+    "bracketType": 8,
+    "relationshipDataTypeSync": true,
+    "relationshipOptimization": true,
+    "columnOrder": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "maxWidthComment": 80,
+    "ignoreSaveSettings": 0
+  },
+  "doc": {
+    "tableIds": [
+      "table__auth_user",
+      "table__regions",
+      "table__user_profiles",
+      "table__business_profiles",
+      "table__terms_agreements",
+      "table__boards",
+      "table__article_categories",
+      "table__articles",
+      "table__article_category_maps",
+      "table__hashtags",
+      "table__article_hashtags",
+      "table__post_files",
+      "table__comments",
+      "table__article_reactions",
+      "table__comment_reactions",
+      "table__follows",
+      "table__stores",
+      "table__store_images",
+      "table__experience_campaigns",
+      "table__experience_applications",
+      "table__experience_reviews",
+      "table__user_experience_temperatures",
+      "table__notifications"
+    ],
+    "relationshipIds": [
+      "relationship__auth_user_to_user_profiles",
+      "relationship__regions_to_user_profiles",
+      "relationship__auth_user_to_business_profiles",
+      "relationship__auth_user_to_terms_agreements",
+      "relationship__boards_to_article_categories",
+      "relationship__article_categories_self_parent",
+      "relationship__boards_to_articles",
+      "relationship__auth_user_to_articles",
+      "relationship__regions_to_articles",
+      "relationship__articles_to_article_category_maps",
+      "relationship__article_categories_to_article_category_maps",
+      "relationship__articles_to_article_hashtags",
+      "relationship__hashtags_to_article_hashtags",
+      "relationship__articles_to_post_files",
+      "relationship__articles_to_comments",
+      "relationship__auth_user_to_comments",
+      "relationship__comments_self_parent",
+      "relationship__articles_to_article_reactions",
+      "relationship__auth_user_to_article_reactions",
+      "relationship__comments_to_comment_reactions",
+      "relationship__auth_user_to_comment_reactions",
+      "relationship__auth_user_to_follows_as_follower",
+      "relationship__auth_user_to_follows_as_following",
+      "relationship__business_profiles_to_stores",
+      "relationship__regions_to_stores",
+      "relationship__stores_to_articles",
+      "relationship__stores_to_store_images",
+      "relationship__articles_to_experience_campaigns",
+      "relationship__stores_to_experience_campaigns",
+      "relationship__experience_campaigns_to_applications",
+      "relationship__auth_user_to_experience_applications",
+      "relationship__experience_applications_to_reviews",
+      "relationship__articles_to_experience_reviews",
+      "relationship__auth_user_to_user_experience_temperatures",
+      "relationship__auth_user_to_notifications",
+      "relationship__articles_to_notifications",
+      "relationship__experience_campaigns_to_notifications"
+    ],
+    "indexIds": [
+      "index__uq_experience_applications_campaign_user",
+      "index__uq_terms_agreements_user_type_version",
+      "index__uq_regions_sido_sigungu_dong",
+      "index__uq_article_categories_board_parent_name"
+    ],
+    "memoIds": [
+      "memo__overview",
+      "memo__mvp_note"
+    ]
+  },
+  "collections": {
+    "tableEntities": {
+      "table__regions": {
+        "id": "table__regions",
+        "name": "regions",
+        "comment": "지역 필터링 기준: 시도/시군구/동 단위",
+        "columnIds": [
+          "column__regions__id",
+          "column__regions__sido",
+          "column__regions__sigungu",
+          "column__regions__dong",
+          "column__regions__latitude",
+          "column__regions__longitude"
+        ],
+        "seqColumnIds": [
+          "column__regions__id",
+          "column__regions__sido",
+          "column__regions__sigungu",
+          "column__regions__dong",
+          "column__regions__latitude",
+          "column__regions__longitude"
+        ],
+        "ui": {
+          "x": 120,
+          "y": 820,
+          "zIndex": 2,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#F5F5F5"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__user_profiles": {
+        "id": "table__user_profiles",
+        "name": "user_profiles",
+        "comment": "일반 사용자 프로필",
+        "columnIds": [
+          "column__user_profiles__user_id",
+          "column__user_profiles__region_id",
+          "column__user_profiles__real_name",
+          "column__user_profiles__nickname",
+          "column__user_profiles__phone",
+          "column__user_profiles__birth_date",
+          "column__user_profiles__gender",
+          "column__user_profiles__profile_image_url",
+          "column__user_profiles__created_at",
+          "column__user_profiles__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__user_profiles__user_id",
+          "column__user_profiles__region_id",
+          "column__user_profiles__real_name",
+          "column__user_profiles__nickname",
+          "column__user_profiles__phone",
+          "column__user_profiles__birth_date",
+          "column__user_profiles__gender",
+          "column__user_profiles__profile_image_url",
+          "column__user_profiles__created_at",
+          "column__user_profiles__updated_at"
+        ],
+        "ui": {
+          "x": 560,
+          "y": 120,
+          "zIndex": 3,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#DCEBFF"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__business_profiles": {
+        "id": "table__business_profiles",
+        "name": "business_profiles",
+        "comment": "사업자 사용자 프로필",
+        "columnIds": [
+          "column__business_profiles__user_id",
+          "column__business_profiles__business_email",
+          "column__business_profiles__company_name",
+          "column__business_profiles__business_number",
+          "column__business_profiles__business_phone",
+          "column__business_profiles__business_address",
+          "column__business_profiles__owner_name",
+          "column__business_profiles__verification_status",
+          "column__business_profiles__created_at",
+          "column__business_profiles__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__business_profiles__user_id",
+          "column__business_profiles__business_email",
+          "column__business_profiles__company_name",
+          "column__business_profiles__business_number",
+          "column__business_profiles__business_phone",
+          "column__business_profiles__business_address",
+          "column__business_profiles__owner_name",
+          "column__business_profiles__verification_status",
+          "column__business_profiles__created_at",
+          "column__business_profiles__updated_at"
+        ],
+        "ui": {
+          "x": 560,
+          "y": 520,
+          "zIndex": 4,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#DCEBFF"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__terms_agreements": {
+        "id": "table__terms_agreements",
+        "name": "terms_agreements",
+        "comment": "약관 동의 이력: 서비스 이용약관, 개인정보 수집 등",
+        "columnIds": [
+          "column__terms_agreements__id",
+          "column__terms_agreements__user_id",
+          "column__terms_agreements__terms_type",
+          "column__terms_agreements__terms_version",
+          "column__terms_agreements__is_agreed",
+          "column__terms_agreements__agreed_at"
+        ],
+        "seqColumnIds": [
+          "column__terms_agreements__id",
+          "column__terms_agreements__user_id",
+          "column__terms_agreements__terms_type",
+          "column__terms_agreements__terms_version",
+          "column__terms_agreements__is_agreed",
+          "column__terms_agreements__agreed_at"
+        ],
+        "ui": {
+          "x": 560,
+          "y": 940,
+          "zIndex": 5,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#DCEBFF"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__boards": {
+        "id": "table__boards",
+        "name": "boards",
+        "comment": "배너/게시판 구분: 상품, 데일리, 체험단, 후기 등",
+        "columnIds": [
+          "column__boards__id",
+          "column__boards__name",
+          "column__boards__board_type",
+          "column__boards__description",
+          "column__boards__is_active",
+          "column__boards__created_at"
+        ],
+        "seqColumnIds": [
+          "column__boards__id",
+          "column__boards__name",
+          "column__boards__board_type",
+          "column__boards__description",
+          "column__boards__is_active",
+          "column__boards__created_at"
+        ],
+        "ui": {
+          "x": 1160,
+          "y": 160,
+          "zIndex": 6,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__article_categories": {
+        "id": "table__article_categories",
+        "name": "article_categories",
+        "comment": "게시판별 1차/2차 토글 카테고리",
+        "columnIds": [
+          "column__article_categories__id",
+          "column__article_categories__board_id",
+          "column__article_categories__parent_id",
+          "column__article_categories__name",
+          "column__article_categories__sort_order"
+        ],
+        "seqColumnIds": [
+          "column__article_categories__id",
+          "column__article_categories__board_id",
+          "column__article_categories__parent_id",
+          "column__article_categories__name",
+          "column__article_categories__sort_order"
+        ],
+        "ui": {
+          "x": 1160,
+          "y": 560,
+          "zIndex": 7,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__articles": {
+        "id": "table__articles",
+        "name": "articles",
+        "comment": "공통 게시글: 상품/데일리/가게홍보/체험단후기 등",
+        "columnIds": [
+          "column__articles__id",
+          "column__articles__board_id",
+          "column__articles__user_id",
+          "column__articles__store_id",
+          "column__articles__region_id",
+          "column__articles__title",
+          "column__articles__content",
+          "column__articles__view_count",
+          "column__articles__is_anonymous",
+          "column__articles__is_deleted",
+          "column__articles__created_at",
+          "column__articles__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__articles__id",
+          "column__articles__board_id",
+          "column__articles__user_id",
+          "column__articles__store_id",
+          "column__articles__region_id",
+          "column__articles__title",
+          "column__articles__content",
+          "column__articles__view_count",
+          "column__articles__is_anonymous",
+          "column__articles__is_deleted",
+          "column__articles__created_at",
+          "column__articles__updated_at"
+        ],
+        "ui": {
+          "x": 1640,
+          "y": 320,
+          "zIndex": 8,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__article_category_maps": {
+        "id": "table__article_category_maps",
+        "name": "article_category_maps",
+        "comment": "게시글-카테고리 N:M 매핑",
+        "columnIds": [
+          "column__article_category_maps__article_id",
+          "column__article_category_maps__category_id"
+        ],
+        "seqColumnIds": [
+          "column__article_category_maps__article_id",
+          "column__article_category_maps__category_id"
+        ],
+        "ui": {
+          "x": 1640,
+          "y": 820,
+          "zIndex": 9,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__hashtags": {
+        "id": "table__hashtags",
+        "name": "hashtags",
+        "comment": "해시태그 마스터",
+        "columnIds": [
+          "column__hashtags__id",
+          "column__hashtags__name",
+          "column__hashtags__created_at"
+        ],
+        "seqColumnIds": [
+          "column__hashtags__id",
+          "column__hashtags__name",
+          "column__hashtags__created_at"
+        ],
+        "ui": {
+          "x": 2140,
+          "y": 120,
+          "zIndex": 10,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__article_hashtags": {
+        "id": "table__article_hashtags",
+        "name": "article_hashtags",
+        "comment": "게시글-해시태그 N:M 매핑",
+        "columnIds": [
+          "column__article_hashtags__article_id",
+          "column__article_hashtags__hashtag_id"
+        ],
+        "seqColumnIds": [
+          "column__article_hashtags__article_id",
+          "column__article_hashtags__hashtag_id"
+        ],
+        "ui": {
+          "x": 2140,
+          "y": 500,
+          "zIndex": 11,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#E8F5E9"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__post_files": {
+        "id": "table__post_files",
+        "name": "post_files",
+        "comment": "게시글 첨부파일: 이미지/영상",
+        "columnIds": [
+          "column__post_files__id",
+          "column__post_files__article_id",
+          "column__post_files__file_url",
+          "column__post_files__file_type",
+          "column__post_files__original_name",
+          "column__post_files__sort_order",
+          "column__post_files__created_at"
+        ],
+        "seqColumnIds": [
+          "column__post_files__id",
+          "column__post_files__article_id",
+          "column__post_files__file_url",
+          "column__post_files__file_type",
+          "column__post_files__original_name",
+          "column__post_files__sort_order",
+          "column__post_files__created_at"
+        ],
+        "ui": {
+          "x": 2640,
+          "y": 180,
+          "zIndex": 12,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FFF2CC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__comments": {
+        "id": "table__comments",
+        "name": "comments",
+        "comment": "댓글/대댓글",
+        "columnIds": [
+          "column__comments__id",
+          "column__comments__article_id",
+          "column__comments__user_id",
+          "column__comments__parent_id",
+          "column__comments__content",
+          "column__comments__is_deleted",
+          "column__comments__created_at",
+          "column__comments__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__comments__id",
+          "column__comments__article_id",
+          "column__comments__user_id",
+          "column__comments__parent_id",
+          "column__comments__content",
+          "column__comments__is_deleted",
+          "column__comments__created_at",
+          "column__comments__updated_at"
+        ],
+        "ui": {
+          "x": 2640,
+          "y": 560,
+          "zIndex": 13,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FFF2CC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__article_reactions": {
+        "id": "table__article_reactions",
+        "name": "article_reactions",
+        "comment": "게시글 추천/비추천",
+        "columnIds": [
+          "column__article_reactions__article_id",
+          "column__article_reactions__user_id",
+          "column__article_reactions__reaction_type",
+          "column__article_reactions__created_at"
+        ],
+        "seqColumnIds": [
+          "column__article_reactions__article_id",
+          "column__article_reactions__user_id",
+          "column__article_reactions__reaction_type",
+          "column__article_reactions__created_at"
+        ],
+        "ui": {
+          "x": 2640,
+          "y": 980,
+          "zIndex": 14,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FFF2CC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__comment_reactions": {
+        "id": "table__comment_reactions",
+        "name": "comment_reactions",
+        "comment": "댓글 좋아요/싫어요",
+        "columnIds": [
+          "column__comment_reactions__comment_id",
+          "column__comment_reactions__user_id",
+          "column__comment_reactions__reaction_type",
+          "column__comment_reactions__created_at"
+        ],
+        "seqColumnIds": [
+          "column__comment_reactions__comment_id",
+          "column__comment_reactions__user_id",
+          "column__comment_reactions__reaction_type",
+          "column__comment_reactions__created_at"
+        ],
+        "ui": {
+          "x": 3140,
+          "y": 720,
+          "zIndex": 15,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FFF2CC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__follows": {
+        "id": "table__follows",
+        "name": "follows",
+        "comment": "유저 팔로우/팔로잉",
+        "columnIds": [
+          "column__follows__follower_id",
+          "column__follows__following_id",
+          "column__follows__created_at"
+        ],
+        "seqColumnIds": [
+          "column__follows__follower_id",
+          "column__follows__following_id",
+          "column__follows__created_at"
+        ],
+        "ui": {
+          "x": 3140,
+          "y": 1080,
+          "zIndex": 16,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FFF2CC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__stores": {
+        "id": "table__stores",
+        "name": "stores",
+        "comment": "동네 가게 정보: 지도 표시 대상",
+        "columnIds": [
+          "column__stores__id",
+          "column__stores__business_profile_id",
+          "column__stores__region_id",
+          "column__stores__name",
+          "column__stores__business_number",
+          "column__stores__phone",
+          "column__stores__address",
+          "column__stores__detail_address",
+          "column__stores__latitude",
+          "column__stores__longitude",
+          "column__stores__description",
+          "column__stores__opening_hours",
+          "column__stores__store_status",
+          "column__stores__created_at",
+          "column__stores__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__stores__id",
+          "column__stores__business_profile_id",
+          "column__stores__region_id",
+          "column__stores__name",
+          "column__stores__business_number",
+          "column__stores__phone",
+          "column__stores__address",
+          "column__stores__detail_address",
+          "column__stores__latitude",
+          "column__stores__longitude",
+          "column__stores__description",
+          "column__stores__opening_hours",
+          "column__stores__store_status",
+          "column__stores__created_at",
+          "column__stores__updated_at"
+        ],
+        "ui": {
+          "x": 1160,
+          "y": 1260,
+          "zIndex": 17,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FCE4EC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__store_images": {
+        "id": "table__store_images",
+        "name": "store_images",
+        "comment": "가게 대표/상세 이미지",
+        "columnIds": [
+          "column__store_images__id",
+          "column__store_images__store_id",
+          "column__store_images__image_url",
+          "column__store_images__sort_order",
+          "column__store_images__created_at"
+        ],
+        "seqColumnIds": [
+          "column__store_images__id",
+          "column__store_images__store_id",
+          "column__store_images__image_url",
+          "column__store_images__sort_order",
+          "column__store_images__created_at"
+        ],
+        "ui": {
+          "x": 1640,
+          "y": 1320,
+          "zIndex": 18,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#FCE4EC"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__experience_campaigns": {
+        "id": "table__experience_campaigns",
+        "name": "experience_campaigns",
+        "comment": "체험단 공고 상세 정보",
+        "columnIds": [
+          "column__experience_campaigns__article_id",
+          "column__experience_campaigns__store_id",
+          "column__experience_campaigns__recruitment_start_at",
+          "column__experience_campaigns__recruitment_end_at",
+          "column__experience_campaigns__experience_start_at",
+          "column__experience_campaigns__experience_end_at",
+          "column__experience_campaigns__max_participants",
+          "column__experience_campaigns__campaign_status",
+          "column__experience_campaigns__product_description",
+          "column__experience_campaigns__notice",
+          "column__experience_campaigns__created_at",
+          "column__experience_campaigns__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__experience_campaigns__article_id",
+          "column__experience_campaigns__store_id",
+          "column__experience_campaigns__recruitment_start_at",
+          "column__experience_campaigns__recruitment_end_at",
+          "column__experience_campaigns__experience_start_at",
+          "column__experience_campaigns__experience_end_at",
+          "column__experience_campaigns__max_participants",
+          "column__experience_campaigns__campaign_status",
+          "column__experience_campaigns__product_description",
+          "column__experience_campaigns__notice",
+          "column__experience_campaigns__created_at",
+          "column__experience_campaigns__updated_at"
+        ],
+        "ui": {
+          "x": 2140,
+          "y": 1280,
+          "zIndex": 19,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#EDE7F6"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__experience_applications": {
+        "id": "table__experience_applications",
+        "name": "experience_applications",
+        "comment": "체험단 신청/선정 상태",
+        "columnIds": [
+          "column__experience_applications__id",
+          "column__experience_applications__campaign_id",
+          "column__experience_applications__user_id",
+          "column__experience_applications__reason",
+          "column__experience_applications__application_status",
+          "column__experience_applications__applied_at",
+          "column__experience_applications__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__experience_applications__id",
+          "column__experience_applications__campaign_id",
+          "column__experience_applications__user_id",
+          "column__experience_applications__reason",
+          "column__experience_applications__application_status",
+          "column__experience_applications__applied_at",
+          "column__experience_applications__updated_at"
+        ],
+        "ui": {
+          "x": 2640,
+          "y": 1340,
+          "zIndex": 20,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#EDE7F6"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__experience_reviews": {
+        "id": "table__experience_reviews",
+        "name": "experience_reviews",
+        "comment": "체험단 후기 연결 정보",
+        "columnIds": [
+          "column__experience_reviews__application_id",
+          "column__experience_reviews__article_id",
+          "column__experience_reviews__created_at",
+          "column__experience_reviews__updated_at"
+        ],
+        "seqColumnIds": [
+          "column__experience_reviews__application_id",
+          "column__experience_reviews__article_id",
+          "column__experience_reviews__created_at",
+          "column__experience_reviews__updated_at"
+        ],
+        "ui": {
+          "x": 3140,
+          "y": 1400,
+          "zIndex": 21,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#EDE7F6"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__user_experience_temperatures": {
+        "id": "table__user_experience_temperatures",
+        "name": "user_experience_temperatures",
+        "comment": "체험단 이행 온도/신뢰도 집계",
+        "columnIds": [
+          "column__user_experience_temperatures__user_id",
+          "column__user_experience_temperatures__temperature",
+          "column__user_experience_temperatures__completed_count",
+          "column__user_experience_temperatures__no_show_count",
+          "column__user_experience_temperatures__review_count",
+          "column__user_experience_temperatures__last_updated_at"
+        ],
+        "seqColumnIds": [
+          "column__user_experience_temperatures__user_id",
+          "column__user_experience_temperatures__temperature",
+          "column__user_experience_temperatures__completed_count",
+          "column__user_experience_temperatures__no_show_count",
+          "column__user_experience_temperatures__review_count",
+          "column__user_experience_temperatures__last_updated_at"
+        ],
+        "ui": {
+          "x": 3140,
+          "y": 1780,
+          "zIndex": 22,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#EDE7F6"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__notifications": {
+        "id": "table__notifications",
+        "name": "notifications",
+        "comment": "알림: 댓글, 팔로우, 체험단 선정/후기 요청 등",
+        "columnIds": [
+          "column__notifications__id",
+          "column__notifications__user_id",
+          "column__notifications__notification_type",
+          "column__notifications__message",
+          "column__notifications__target_article_id",
+          "column__notifications__target_campaign_id",
+          "column__notifications__is_read",
+          "column__notifications__created_at"
+        ],
+        "seqColumnIds": [
+          "column__notifications__id",
+          "column__notifications__user_id",
+          "column__notifications__notification_type",
+          "column__notifications__message",
+          "column__notifications__target_article_id",
+          "column__notifications__target_campaign_id",
+          "column__notifications__is_read",
+          "column__notifications__created_at"
+        ],
+        "ui": {
+          "x": 3640,
+          "y": 1080,
+          "zIndex": 23,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#EDE7F6"
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "table__auth_user": {
+        "id": "table__auth_user",
+        "name": "auth_user",
+        "comment": "Django 기본 인증 사용자 테이블: django.contrib.auth.models.User",
+        "columnIds": [
+          "column__auth_user__id",
+          "column__auth_user__password",
+          "column__auth_user__last_login",
+          "column__auth_user__is_superuser",
+          "column__auth_user__username",
+          "column__auth_user__first_name",
+          "column__auth_user__last_name",
+          "column__auth_user__email",
+          "column__auth_user__is_staff",
+          "column__auth_user__is_active",
+          "column__auth_user__date_joined"
+        ],
+        "seqColumnIds": [
+          "column__auth_user__id",
+          "column__auth_user__password",
+          "column__auth_user__last_login",
+          "column__auth_user__is_superuser",
+          "column__auth_user__username",
+          "column__auth_user__first_name",
+          "column__auth_user__last_name",
+          "column__auth_user__email",
+          "column__auth_user__is_staff",
+          "column__auth_user__is_active",
+          "column__auth_user__date_joined"
+        ],
+        "ui": {
+          "x": 120,
+          "y": 160,
+          "zIndex": 1,
+          "widthName": 170,
+          "widthComment": 230,
+          "color": "#DCEBFF"
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      }
+    },
+    "tableColumnEntities": {
+      "column__regions__id": {
+        "id": "column__regions__id",
+        "tableId": "table__regions",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__regions__sido": {
+        "id": "column__regions__sido",
+        "tableId": "table__regions",
+        "name": "sido",
+        "comment": "시/도",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__regions__sigungu": {
+        "id": "column__regions__sigungu",
+        "tableId": "table__regions",
+        "name": "sigungu",
+        "comment": "시/군/구",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__regions__dong": {
+        "id": "column__regions__dong",
+        "tableId": "table__regions",
+        "name": "dong",
+        "comment": "읍/면/동",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__regions__latitude": {
+        "id": "column__regions__latitude",
+        "tableId": "table__regions",
+        "name": "latitude",
+        "comment": "위도",
+        "dataType": "DECIMAL(10,7)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__regions__longitude": {
+        "id": "column__regions__longitude",
+        "tableId": "table__regions",
+        "name": "longitude",
+        "comment": "경도",
+        "dataType": "DECIMAL(10,7)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__user_id": {
+        "id": "column__user_profiles__user_id",
+        "tableId": "table__user_profiles",
+        "name": "user_id",
+        "comment": "PK/FK auth_user.id, 일반 사용자 프로필",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__region_id": {
+        "id": "column__user_profiles__region_id",
+        "tableId": "table__user_profiles",
+        "name": "region_id",
+        "comment": "FK regions.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__real_name": {
+        "id": "column__user_profiles__real_name",
+        "tableId": "table__user_profiles",
+        "name": "real_name",
+        "comment": "실명",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__nickname": {
+        "id": "column__user_profiles__nickname",
+        "tableId": "table__user_profiles",
+        "name": "nickname",
+        "comment": "닉네임",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__phone": {
+        "id": "column__user_profiles__phone",
+        "tableId": "table__user_profiles",
+        "name": "phone",
+        "comment": "전화번호",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__birth_date": {
+        "id": "column__user_profiles__birth_date",
+        "tableId": "table__user_profiles",
+        "name": "birth_date",
+        "comment": "생년월일",
+        "dataType": "DATE",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__gender": {
+        "id": "column__user_profiles__gender",
+        "tableId": "table__user_profiles",
+        "name": "gender",
+        "comment": "성별",
+        "dataType": "VARCHAR(10)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__profile_image_url": {
+        "id": "column__user_profiles__profile_image_url",
+        "tableId": "table__user_profiles",
+        "name": "profile_image_url",
+        "comment": "프로필 이미지",
+        "dataType": "VARCHAR(500)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__created_at": {
+        "id": "column__user_profiles__created_at",
+        "tableId": "table__user_profiles",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_profiles__updated_at": {
+        "id": "column__user_profiles__updated_at",
+        "tableId": "table__user_profiles",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__user_id": {
+        "id": "column__business_profiles__user_id",
+        "tableId": "table__business_profiles",
+        "name": "user_id",
+        "comment": "PK/FK auth_user.id, 사업자 프로필",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__business_email": {
+        "id": "column__business_profiles__business_email",
+        "tableId": "table__business_profiles",
+        "name": "business_email",
+        "comment": "사업자 이메일",
+        "dataType": "VARCHAR(254)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__company_name": {
+        "id": "column__business_profiles__company_name",
+        "tableId": "table__business_profiles",
+        "name": "company_name",
+        "comment": "상호명",
+        "dataType": "VARCHAR(100)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__business_number": {
+        "id": "column__business_profiles__business_number",
+        "tableId": "table__business_profiles",
+        "name": "business_number",
+        "comment": "사업자 등록번호",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__business_phone": {
+        "id": "column__business_profiles__business_phone",
+        "tableId": "table__business_profiles",
+        "name": "business_phone",
+        "comment": "사업장 전화번호",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__business_address": {
+        "id": "column__business_profiles__business_address",
+        "tableId": "table__business_profiles",
+        "name": "business_address",
+        "comment": "사업장 주소",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__owner_name": {
+        "id": "column__business_profiles__owner_name",
+        "tableId": "table__business_profiles",
+        "name": "owner_name",
+        "comment": "대표자 성명",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__verification_status": {
+        "id": "column__business_profiles__verification_status",
+        "tableId": "table__business_profiles",
+        "name": "verification_status",
+        "comment": "pending/approved/rejected",
+        "dataType": "VARCHAR(20)",
+        "default": "pending",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__created_at": {
+        "id": "column__business_profiles__created_at",
+        "tableId": "table__business_profiles",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__business_profiles__updated_at": {
+        "id": "column__business_profiles__updated_at",
+        "tableId": "table__business_profiles",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__id": {
+        "id": "column__terms_agreements__id",
+        "tableId": "table__terms_agreements",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__user_id": {
+        "id": "column__terms_agreements__user_id",
+        "tableId": "table__terms_agreements",
+        "name": "user_id",
+        "comment": "FK auth_user.id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__terms_type": {
+        "id": "column__terms_agreements__terms_type",
+        "tableId": "table__terms_agreements",
+        "name": "terms_type",
+        "comment": "service_terms/privacy_policy",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__terms_version": {
+        "id": "column__terms_agreements__terms_version",
+        "tableId": "table__terms_agreements",
+        "name": "terms_version",
+        "comment": "약관 버전",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__is_agreed": {
+        "id": "column__terms_agreements__is_agreed",
+        "tableId": "table__terms_agreements",
+        "name": "is_agreed",
+        "comment": "동의 여부",
+        "dataType": "BOOLEAN",
+        "default": "true",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__terms_agreements__agreed_at": {
+        "id": "column__terms_agreements__agreed_at",
+        "tableId": "table__terms_agreements",
+        "name": "agreed_at",
+        "comment": "동의 시각",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__id": {
+        "id": "column__boards__id",
+        "tableId": "table__boards",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__name": {
+        "id": "column__boards__name",
+        "tableId": "table__boards",
+        "name": "name",
+        "comment": "게시판명",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__board_type": {
+        "id": "column__boards__board_type",
+        "tableId": "table__boards",
+        "name": "board_type",
+        "comment": "product/daily/store/campaign/review",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__description": {
+        "id": "column__boards__description",
+        "tableId": "table__boards",
+        "name": "description",
+        "comment": "게시판 설명",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__is_active": {
+        "id": "column__boards__is_active",
+        "tableId": "table__boards",
+        "name": "is_active",
+        "comment": "사용 여부",
+        "dataType": "BOOLEAN",
+        "default": "true",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__boards__created_at": {
+        "id": "column__boards__created_at",
+        "tableId": "table__boards",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_categories__id": {
+        "id": "column__article_categories__id",
+        "tableId": "table__article_categories",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_categories__board_id": {
+        "id": "column__article_categories__board_id",
+        "tableId": "table__article_categories",
+        "name": "board_id",
+        "comment": "FK boards.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_categories__parent_id": {
+        "id": "column__article_categories__parent_id",
+        "tableId": "table__article_categories",
+        "name": "parent_id",
+        "comment": "FK article_categories.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_categories__name": {
+        "id": "column__article_categories__name",
+        "tableId": "table__article_categories",
+        "name": "name",
+        "comment": "카테고리명",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_categories__sort_order": {
+        "id": "column__article_categories__sort_order",
+        "tableId": "table__article_categories",
+        "name": "sort_order",
+        "comment": "정렬 순서",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__id": {
+        "id": "column__articles__id",
+        "tableId": "table__articles",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__board_id": {
+        "id": "column__articles__board_id",
+        "tableId": "table__articles",
+        "name": "board_id",
+        "comment": "FK boards.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__user_id": {
+        "id": "column__articles__user_id",
+        "tableId": "table__articles",
+        "name": "user_id",
+        "comment": "FK auth_user.id, 작성자",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__store_id": {
+        "id": "column__articles__store_id",
+        "tableId": "table__articles",
+        "name": "store_id",
+        "comment": "FK stores.id, nullable",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__region_id": {
+        "id": "column__articles__region_id",
+        "tableId": "table__articles",
+        "name": "region_id",
+        "comment": "FK regions.id, nullable",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__title": {
+        "id": "column__articles__title",
+        "tableId": "table__articles",
+        "name": "title",
+        "comment": "제목",
+        "dataType": "VARCHAR(150)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__content": {
+        "id": "column__articles__content",
+        "tableId": "table__articles",
+        "name": "content",
+        "comment": "본문",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__view_count": {
+        "id": "column__articles__view_count",
+        "tableId": "table__articles",
+        "name": "view_count",
+        "comment": "조회수",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__is_anonymous": {
+        "id": "column__articles__is_anonymous",
+        "tableId": "table__articles",
+        "name": "is_anonymous",
+        "comment": "익명 게시판 여부",
+        "dataType": "BOOLEAN",
+        "default": "false",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__is_deleted": {
+        "id": "column__articles__is_deleted",
+        "tableId": "table__articles",
+        "name": "is_deleted",
+        "comment": "소프트 삭제",
+        "dataType": "BOOLEAN",
+        "default": "false",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__created_at": {
+        "id": "column__articles__created_at",
+        "tableId": "table__articles",
+        "name": "created_at",
+        "comment": "작성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__articles__updated_at": {
+        "id": "column__articles__updated_at",
+        "tableId": "table__articles",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_category_maps__article_id": {
+        "id": "column__article_category_maps__article_id",
+        "tableId": "table__article_category_maps",
+        "name": "article_id",
+        "comment": "PK/FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_category_maps__category_id": {
+        "id": "column__article_category_maps__category_id",
+        "tableId": "table__article_category_maps",
+        "name": "category_id",
+        "comment": "PK/FK article_categories.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__hashtags__id": {
+        "id": "column__hashtags__id",
+        "tableId": "table__hashtags",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__hashtags__name": {
+        "id": "column__hashtags__name",
+        "tableId": "table__hashtags",
+        "name": "name",
+        "comment": "해시태그명",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__hashtags__created_at": {
+        "id": "column__hashtags__created_at",
+        "tableId": "table__hashtags",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_hashtags__article_id": {
+        "id": "column__article_hashtags__article_id",
+        "tableId": "table__article_hashtags",
+        "name": "article_id",
+        "comment": "PK/FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_hashtags__hashtag_id": {
+        "id": "column__article_hashtags__hashtag_id",
+        "tableId": "table__article_hashtags",
+        "name": "hashtag_id",
+        "comment": "PK/FK hashtags.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__id": {
+        "id": "column__post_files__id",
+        "tableId": "table__post_files",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__article_id": {
+        "id": "column__post_files__article_id",
+        "tableId": "table__post_files",
+        "name": "article_id",
+        "comment": "FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__file_url": {
+        "id": "column__post_files__file_url",
+        "tableId": "table__post_files",
+        "name": "file_url",
+        "comment": "파일 경로",
+        "dataType": "VARCHAR(500)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__file_type": {
+        "id": "column__post_files__file_type",
+        "tableId": "table__post_files",
+        "name": "file_type",
+        "comment": "image/video",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__original_name": {
+        "id": "column__post_files__original_name",
+        "tableId": "table__post_files",
+        "name": "original_name",
+        "comment": "원본 파일명",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__sort_order": {
+        "id": "column__post_files__sort_order",
+        "tableId": "table__post_files",
+        "name": "sort_order",
+        "comment": "노출 순서",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__post_files__created_at": {
+        "id": "column__post_files__created_at",
+        "tableId": "table__post_files",
+        "name": "created_at",
+        "comment": "업로드일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__id": {
+        "id": "column__comments__id",
+        "tableId": "table__comments",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__article_id": {
+        "id": "column__comments__article_id",
+        "tableId": "table__comments",
+        "name": "article_id",
+        "comment": "FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__user_id": {
+        "id": "column__comments__user_id",
+        "tableId": "table__comments",
+        "name": "user_id",
+        "comment": "FK auth_user.id, 댓글 작성자",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__parent_id": {
+        "id": "column__comments__parent_id",
+        "tableId": "table__comments",
+        "name": "parent_id",
+        "comment": "FK comments.id, 대댓글",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__content": {
+        "id": "column__comments__content",
+        "tableId": "table__comments",
+        "name": "content",
+        "comment": "댓글 내용",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__is_deleted": {
+        "id": "column__comments__is_deleted",
+        "tableId": "table__comments",
+        "name": "is_deleted",
+        "comment": "소프트 삭제",
+        "dataType": "BOOLEAN",
+        "default": "false",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__created_at": {
+        "id": "column__comments__created_at",
+        "tableId": "table__comments",
+        "name": "created_at",
+        "comment": "작성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comments__updated_at": {
+        "id": "column__comments__updated_at",
+        "tableId": "table__comments",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_reactions__article_id": {
+        "id": "column__article_reactions__article_id",
+        "tableId": "table__article_reactions",
+        "name": "article_id",
+        "comment": "PK/FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_reactions__user_id": {
+        "id": "column__article_reactions__user_id",
+        "tableId": "table__article_reactions",
+        "name": "user_id",
+        "comment": "PK/FK auth_user.id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_reactions__reaction_type": {
+        "id": "column__article_reactions__reaction_type",
+        "tableId": "table__article_reactions",
+        "name": "reaction_type",
+        "comment": "like/dislike",
+        "dataType": "VARCHAR(10)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__article_reactions__created_at": {
+        "id": "column__article_reactions__created_at",
+        "tableId": "table__article_reactions",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comment_reactions__comment_id": {
+        "id": "column__comment_reactions__comment_id",
+        "tableId": "table__comment_reactions",
+        "name": "comment_id",
+        "comment": "PK/FK comments.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comment_reactions__user_id": {
+        "id": "column__comment_reactions__user_id",
+        "tableId": "table__comment_reactions",
+        "name": "user_id",
+        "comment": "PK/FK auth_user.id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comment_reactions__reaction_type": {
+        "id": "column__comment_reactions__reaction_type",
+        "tableId": "table__comment_reactions",
+        "name": "reaction_type",
+        "comment": "like/dislike",
+        "dataType": "VARCHAR(10)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__comment_reactions__created_at": {
+        "id": "column__comment_reactions__created_at",
+        "tableId": "table__comment_reactions",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__follows__follower_id": {
+        "id": "column__follows__follower_id",
+        "tableId": "table__follows",
+        "name": "follower_id",
+        "comment": "PK/FK auth_user.id, 팔로우 건 사람",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__follows__following_id": {
+        "id": "column__follows__following_id",
+        "tableId": "table__follows",
+        "name": "following_id",
+        "comment": "PK/FK auth_user.id, 팔로우 대상",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__follows__created_at": {
+        "id": "column__follows__created_at",
+        "tableId": "table__follows",
+        "name": "created_at",
+        "comment": "팔로우일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__id": {
+        "id": "column__stores__id",
+        "tableId": "table__stores",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__business_profile_id": {
+        "id": "column__stores__business_profile_id",
+        "tableId": "table__stores",
+        "name": "business_profile_id",
+        "comment": "FK business_profiles.user_id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__region_id": {
+        "id": "column__stores__region_id",
+        "tableId": "table__stores",
+        "name": "region_id",
+        "comment": "FK regions.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__name": {
+        "id": "column__stores__name",
+        "tableId": "table__stores",
+        "name": "name",
+        "comment": "가게명",
+        "dataType": "VARCHAR(100)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__business_number": {
+        "id": "column__stores__business_number",
+        "tableId": "table__stores",
+        "name": "business_number",
+        "comment": "사업자 등록번호",
+        "dataType": "VARCHAR(30)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__phone": {
+        "id": "column__stores__phone",
+        "tableId": "table__stores",
+        "name": "phone",
+        "comment": "가게 전화번호",
+        "dataType": "VARCHAR(20)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__address": {
+        "id": "column__stores__address",
+        "tableId": "table__stores",
+        "name": "address",
+        "comment": "주소",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__detail_address": {
+        "id": "column__stores__detail_address",
+        "tableId": "table__stores",
+        "name": "detail_address",
+        "comment": "상세 주소",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__latitude": {
+        "id": "column__stores__latitude",
+        "tableId": "table__stores",
+        "name": "latitude",
+        "comment": "지도 위도",
+        "dataType": "DECIMAL(10,7)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__longitude": {
+        "id": "column__stores__longitude",
+        "tableId": "table__stores",
+        "name": "longitude",
+        "comment": "지도 경도",
+        "dataType": "DECIMAL(10,7)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__description": {
+        "id": "column__stores__description",
+        "tableId": "table__stores",
+        "name": "description",
+        "comment": "가게 소개",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__opening_hours": {
+        "id": "column__stores__opening_hours",
+        "tableId": "table__stores",
+        "name": "opening_hours",
+        "comment": "운영 시간",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__store_status": {
+        "id": "column__stores__store_status",
+        "tableId": "table__stores",
+        "name": "store_status",
+        "comment": "active/hidden/closed",
+        "dataType": "VARCHAR(20)",
+        "default": "active",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__created_at": {
+        "id": "column__stores__created_at",
+        "tableId": "table__stores",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__stores__updated_at": {
+        "id": "column__stores__updated_at",
+        "tableId": "table__stores",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__store_images__id": {
+        "id": "column__store_images__id",
+        "tableId": "table__store_images",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__store_images__store_id": {
+        "id": "column__store_images__store_id",
+        "tableId": "table__store_images",
+        "name": "store_id",
+        "comment": "FK stores.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__store_images__image_url": {
+        "id": "column__store_images__image_url",
+        "tableId": "table__store_images",
+        "name": "image_url",
+        "comment": "이미지 경로",
+        "dataType": "VARCHAR(500)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__store_images__sort_order": {
+        "id": "column__store_images__sort_order",
+        "tableId": "table__store_images",
+        "name": "sort_order",
+        "comment": "노출 순서",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__store_images__created_at": {
+        "id": "column__store_images__created_at",
+        "tableId": "table__store_images",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__article_id": {
+        "id": "column__experience_campaigns__article_id",
+        "tableId": "table__experience_campaigns",
+        "name": "article_id",
+        "comment": "PK/FK articles.id, 체험단 공고 게시글",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__store_id": {
+        "id": "column__experience_campaigns__store_id",
+        "tableId": "table__experience_campaigns",
+        "name": "store_id",
+        "comment": "FK stores.id, 모집 사업장",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__recruitment_start_at": {
+        "id": "column__experience_campaigns__recruitment_start_at",
+        "tableId": "table__experience_campaigns",
+        "name": "recruitment_start_at",
+        "comment": "모집 시작일",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__recruitment_end_at": {
+        "id": "column__experience_campaigns__recruitment_end_at",
+        "tableId": "table__experience_campaigns",
+        "name": "recruitment_end_at",
+        "comment": "모집 마감일",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__experience_start_at": {
+        "id": "column__experience_campaigns__experience_start_at",
+        "tableId": "table__experience_campaigns",
+        "name": "experience_start_at",
+        "comment": "체험 시작일",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__experience_end_at": {
+        "id": "column__experience_campaigns__experience_end_at",
+        "tableId": "table__experience_campaigns",
+        "name": "experience_end_at",
+        "comment": "체험 종료일",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__max_participants": {
+        "id": "column__experience_campaigns__max_participants",
+        "tableId": "table__experience_campaigns",
+        "name": "max_participants",
+        "comment": "모집 인원",
+        "dataType": "INT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__campaign_status": {
+        "id": "column__experience_campaigns__campaign_status",
+        "tableId": "table__experience_campaigns",
+        "name": "campaign_status",
+        "comment": "recruiting/closed/finished",
+        "dataType": "VARCHAR(20)",
+        "default": "recruiting",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__product_description": {
+        "id": "column__experience_campaigns__product_description",
+        "tableId": "table__experience_campaigns",
+        "name": "product_description",
+        "comment": "상품 설명",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__notice": {
+        "id": "column__experience_campaigns__notice",
+        "tableId": "table__experience_campaigns",
+        "name": "notice",
+        "comment": "공지 사항",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__created_at": {
+        "id": "column__experience_campaigns__created_at",
+        "tableId": "table__experience_campaigns",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_campaigns__updated_at": {
+        "id": "column__experience_campaigns__updated_at",
+        "tableId": "table__experience_campaigns",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__id": {
+        "id": "column__experience_applications__id",
+        "tableId": "table__experience_applications",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__campaign_id": {
+        "id": "column__experience_applications__campaign_id",
+        "tableId": "table__experience_applications",
+        "name": "campaign_id",
+        "comment": "FK experience_campaigns.article_id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__user_id": {
+        "id": "column__experience_applications__user_id",
+        "tableId": "table__experience_applications",
+        "name": "user_id",
+        "comment": "FK auth_user.id, 신청자",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__reason": {
+        "id": "column__experience_applications__reason",
+        "tableId": "table__experience_applications",
+        "name": "reason",
+        "comment": "신청 사유",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__application_status": {
+        "id": "column__experience_applications__application_status",
+        "tableId": "table__experience_applications",
+        "name": "application_status",
+        "comment": "applied/selected/rejected/canceled/completed/no_show",
+        "dataType": "VARCHAR(20)",
+        "default": "applied",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__applied_at": {
+        "id": "column__experience_applications__applied_at",
+        "tableId": "table__experience_applications",
+        "name": "applied_at",
+        "comment": "신청일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_applications__updated_at": {
+        "id": "column__experience_applications__updated_at",
+        "tableId": "table__experience_applications",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_reviews__application_id": {
+        "id": "column__experience_reviews__application_id",
+        "tableId": "table__experience_reviews",
+        "name": "application_id",
+        "comment": "PK/FK experience_applications.id, 후기 대상 신청 건",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_reviews__article_id": {
+        "id": "column__experience_reviews__article_id",
+        "tableId": "table__experience_reviews",
+        "name": "article_id",
+        "comment": "FK articles.id, 후기 게시글",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_reviews__created_at": {
+        "id": "column__experience_reviews__created_at",
+        "tableId": "table__experience_reviews",
+        "name": "created_at",
+        "comment": "작성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__experience_reviews__updated_at": {
+        "id": "column__experience_reviews__updated_at",
+        "tableId": "table__experience_reviews",
+        "name": "updated_at",
+        "comment": "수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__user_id": {
+        "id": "column__user_experience_temperatures__user_id",
+        "tableId": "table__user_experience_temperatures",
+        "name": "user_id",
+        "comment": "PK/FK auth_user.id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 9,
+        "ui": {
+          "keys": 3,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__temperature": {
+        "id": "column__user_experience_temperatures__temperature",
+        "tableId": "table__user_experience_temperatures",
+        "name": "temperature",
+        "comment": "체험단 온도",
+        "dataType": "DECIMAL(5,2)",
+        "default": "36.50",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__completed_count": {
+        "id": "column__user_experience_temperatures__completed_count",
+        "tableId": "table__user_experience_temperatures",
+        "name": "completed_count",
+        "comment": "이행 완료 수",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__no_show_count": {
+        "id": "column__user_experience_temperatures__no_show_count",
+        "tableId": "table__user_experience_temperatures",
+        "name": "no_show_count",
+        "comment": "미이행 수",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__review_count": {
+        "id": "column__user_experience_temperatures__review_count",
+        "tableId": "table__user_experience_temperatures",
+        "name": "review_count",
+        "comment": "후기 작성 수",
+        "dataType": "INT",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__user_experience_temperatures__last_updated_at": {
+        "id": "column__user_experience_temperatures__last_updated_at",
+        "tableId": "table__user_experience_temperatures",
+        "name": "last_updated_at",
+        "comment": "집계 수정일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__id": {
+        "id": "column__notifications__id",
+        "tableId": "table__notifications",
+        "name": "id",
+        "comment": "PK",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__user_id": {
+        "id": "column__notifications__user_id",
+        "tableId": "table__notifications",
+        "name": "user_id",
+        "comment": "FK auth_user.id, 수신자",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__notification_type": {
+        "id": "column__notifications__notification_type",
+        "tableId": "table__notifications",
+        "name": "notification_type",
+        "comment": "알림 유형",
+        "dataType": "VARCHAR(50)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__message": {
+        "id": "column__notifications__message",
+        "tableId": "table__notifications",
+        "name": "message",
+        "comment": "알림 메시지",
+        "dataType": "VARCHAR(255)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__target_article_id": {
+        "id": "column__notifications__target_article_id",
+        "tableId": "table__notifications",
+        "name": "target_article_id",
+        "comment": "FK articles.id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__target_campaign_id": {
+        "id": "column__notifications__target_campaign_id",
+        "tableId": "table__notifications",
+        "name": "target_campaign_id",
+        "comment": "FK experience_campaigns.article_id",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__is_read": {
+        "id": "column__notifications__is_read",
+        "tableId": "table__notifications",
+        "name": "is_read",
+        "comment": "읽음 여부",
+        "dataType": "BOOLEAN",
+        "default": "false",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__notifications__created_at": {
+        "id": "column__notifications__created_at",
+        "tableId": "table__notifications",
+        "name": "created_at",
+        "comment": "생성일",
+        "dataType": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "column__auth_user__id": {
+        "id": "column__auth_user__id",
+        "tableId": "table__auth_user",
+        "name": "id",
+        "comment": "PK, Django auth_user 기본 id",
+        "dataType": "INTEGER",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__password": {
+        "id": "column__auth_user__password",
+        "tableId": "table__auth_user",
+        "name": "password",
+        "comment": "암호화 비밀번호 해시",
+        "dataType": "VARCHAR(128)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__last_login": {
+        "id": "column__auth_user__last_login",
+        "tableId": "table__auth_user",
+        "name": "last_login",
+        "comment": "마지막 로그인 시각, nullable",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__is_superuser": {
+        "id": "column__auth_user__is_superuser",
+        "tableId": "table__auth_user",
+        "name": "is_superuser",
+        "comment": "슈퍼유저 여부",
+        "dataType": "BOOLEAN",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__username": {
+        "id": "column__auth_user__username",
+        "tableId": "table__auth_user",
+        "name": "username",
+        "comment": "로그인 아이디, Django 기본 unique",
+        "dataType": "VARCHAR(150)",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__first_name": {
+        "id": "column__auth_user__first_name",
+        "tableId": "table__auth_user",
+        "name": "first_name",
+        "comment": "Django 기본 이름 필드",
+        "dataType": "VARCHAR(150)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__last_name": {
+        "id": "column__auth_user__last_name",
+        "tableId": "table__auth_user",
+        "name": "last_name",
+        "comment": "Django 기본 성 필드",
+        "dataType": "VARCHAR(150)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__email": {
+        "id": "column__auth_user__email",
+        "tableId": "table__auth_user",
+        "name": "email",
+        "comment": "Django 기본 이메일 필드, 기본 unique 아님",
+        "dataType": "VARCHAR(254)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__is_staff": {
+        "id": "column__auth_user__is_staff",
+        "tableId": "table__auth_user",
+        "name": "is_staff",
+        "comment": "관리자 사이트 접근 여부",
+        "dataType": "BOOLEAN",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__is_active": {
+        "id": "column__auth_user__is_active",
+        "tableId": "table__auth_user",
+        "name": "is_active",
+        "comment": "활성 계정 여부",
+        "dataType": "BOOLEAN",
+        "default": "1",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "column__auth_user__date_joined": {
+        "id": "column__auth_user__date_joined",
+        "tableId": "table__auth_user",
+        "name": "date_joined",
+        "comment": "가입일",
+        "dataType": "DATETIME",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 150,
+          "widthComment": 210,
+          "widthDataType": 120,
+          "widthDefault": 80
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      }
+    },
+    "relationshipEntities": {
+      "relationship__auth_user_to_user_profiles": {
+        "id": "relationship__auth_user_to_user_profiles",
+        "identification": true,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__user_profiles",
+          "columnIds": [
+            "column__user_profiles__user_id"
+          ],
+          "x": 560,
+          "y": 200,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__regions_to_user_profiles": {
+        "id": "relationship__regions_to_user_profiles",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__regions",
+          "columnIds": [
+            "column__regions__id"
+          ],
+          "x": 280,
+          "y": 820,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "table__user_profiles",
+          "columnIds": [
+            "column__user_profiles__region_id"
+          ],
+          "x": 720,
+          "y": 380,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_business_profiles": {
+        "id": "relationship__auth_user_to_business_profiles",
+        "identification": true,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__business_profiles",
+          "columnIds": [
+            "column__business_profiles__user_id"
+          ],
+          "x": 560,
+          "y": 600,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_terms_agreements": {
+        "id": "relationship__auth_user_to_terms_agreements",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 280,
+          "y": 420,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__terms_agreements",
+          "columnIds": [
+            "column__terms_agreements__user_id"
+          ],
+          "x": 720,
+          "y": 940,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__boards_to_article_categories": {
+        "id": "relationship__boards_to_article_categories",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__boards",
+          "columnIds": [
+            "column__boards__id"
+          ],
+          "x": 1320,
+          "y": 420,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__article_categories",
+          "columnIds": [
+            "column__article_categories__board_id"
+          ],
+          "x": 1320,
+          "y": 560,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__article_categories_self_parent": {
+        "id": "relationship__article_categories_self_parent",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__article_categories",
+          "columnIds": [
+            "column__article_categories__id"
+          ],
+          "x": 1520,
+          "y": 640,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__article_categories",
+          "columnIds": [
+            "column__article_categories__parent_id"
+          ],
+          "x": 1160,
+          "y": 640,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__boards_to_articles": {
+        "id": "relationship__boards_to_articles",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__boards",
+          "columnIds": [
+            "column__boards__id"
+          ],
+          "x": 1520,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__board_id"
+          ],
+          "x": 1640,
+          "y": 400,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_articles": {
+        "id": "relationship__auth_user_to_articles",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__user_id"
+          ],
+          "x": 1640,
+          "y": 400,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__regions_to_articles": {
+        "id": "relationship__regions_to_articles",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__regions",
+          "columnIds": [
+            "column__regions__id"
+          ],
+          "x": 480,
+          "y": 900,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__region_id"
+          ],
+          "x": 1640,
+          "y": 400,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_article_category_maps": {
+        "id": "relationship__articles_to_article_category_maps",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 1800,
+          "y": 580,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__article_category_maps",
+          "columnIds": [
+            "column__article_category_maps__article_id"
+          ],
+          "x": 1800,
+          "y": 820,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__article_categories_to_article_category_maps": {
+        "id": "relationship__article_categories_to_article_category_maps",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__article_categories",
+          "columnIds": [
+            "column__article_categories__id"
+          ],
+          "x": 1520,
+          "y": 640,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__article_category_maps",
+          "columnIds": [
+            "column__article_category_maps__category_id"
+          ],
+          "x": 1640,
+          "y": 900,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_article_hashtags": {
+        "id": "relationship__articles_to_article_hashtags",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__article_hashtags",
+          "columnIds": [
+            "column__article_hashtags__article_id"
+          ],
+          "x": 2140,
+          "y": 580,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__hashtags_to_article_hashtags": {
+        "id": "relationship__hashtags_to_article_hashtags",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__hashtags",
+          "columnIds": [
+            "column__hashtags__id"
+          ],
+          "x": 2300,
+          "y": 380,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__article_hashtags",
+          "columnIds": [
+            "column__article_hashtags__hashtag_id"
+          ],
+          "x": 2300,
+          "y": 500,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_post_files": {
+        "id": "relationship__articles_to_post_files",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__post_files",
+          "columnIds": [
+            "column__post_files__article_id"
+          ],
+          "x": 2640,
+          "y": 260,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_comments": {
+        "id": "relationship__articles_to_comments",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__comments",
+          "columnIds": [
+            "column__comments__article_id"
+          ],
+          "x": 2640,
+          "y": 640,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_comments": {
+        "id": "relationship__auth_user_to_comments",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__comments",
+          "columnIds": [
+            "column__comments__user_id"
+          ],
+          "x": 2640,
+          "y": 640,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__comments_self_parent": {
+        "id": "relationship__comments_self_parent",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__comments",
+          "columnIds": [
+            "column__comments__id"
+          ],
+          "x": 3000,
+          "y": 640,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__comments",
+          "columnIds": [
+            "column__comments__parent_id"
+          ],
+          "x": 2640,
+          "y": 640,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_article_reactions": {
+        "id": "relationship__articles_to_article_reactions",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__article_reactions",
+          "columnIds": [
+            "column__article_reactions__article_id"
+          ],
+          "x": 2640,
+          "y": 1060,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_article_reactions": {
+        "id": "relationship__auth_user_to_article_reactions",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__article_reactions",
+          "columnIds": [
+            "column__article_reactions__user_id"
+          ],
+          "x": 2640,
+          "y": 1060,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__comments_to_comment_reactions": {
+        "id": "relationship__comments_to_comment_reactions",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__comments",
+          "columnIds": [
+            "column__comments__id"
+          ],
+          "x": 3000,
+          "y": 640,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__comment_reactions",
+          "columnIds": [
+            "column__comment_reactions__comment_id"
+          ],
+          "x": 3140,
+          "y": 800,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_comment_reactions": {
+        "id": "relationship__auth_user_to_comment_reactions",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__comment_reactions",
+          "columnIds": [
+            "column__comment_reactions__user_id"
+          ],
+          "x": 3140,
+          "y": 800,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_follows_as_follower": {
+        "id": "relationship__auth_user_to_follows_as_follower",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__follows",
+          "columnIds": [
+            "column__follows__follower_id"
+          ],
+          "x": 3140,
+          "y": 1160,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_follows_as_following": {
+        "id": "relationship__auth_user_to_follows_as_following",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__follows",
+          "columnIds": [
+            "column__follows__following_id"
+          ],
+          "x": 3140,
+          "y": 1160,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__business_profiles_to_stores": {
+        "id": "relationship__business_profiles_to_stores",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__business_profiles",
+          "columnIds": [
+            "column__business_profiles__user_id"
+          ],
+          "x": 720,
+          "y": 780,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__stores",
+          "columnIds": [
+            "column__stores__business_profile_id"
+          ],
+          "x": 1320,
+          "y": 1260,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__regions_to_stores": {
+        "id": "relationship__regions_to_stores",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__regions",
+          "columnIds": [
+            "column__regions__id"
+          ],
+          "x": 480,
+          "y": 900,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__stores",
+          "columnIds": [
+            "column__stores__region_id"
+          ],
+          "x": 1160,
+          "y": 1340,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__stores_to_articles": {
+        "id": "relationship__stores_to_articles",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__stores",
+          "columnIds": [
+            "column__stores__id"
+          ],
+          "x": 1320,
+          "y": 1260,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__store_id"
+          ],
+          "x": 1800,
+          "y": 580,
+          "direction": 8
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__stores_to_store_images": {
+        "id": "relationship__stores_to_store_images",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__stores",
+          "columnIds": [
+            "column__stores__id"
+          ],
+          "x": 1520,
+          "y": 1340,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__store_images",
+          "columnIds": [
+            "column__store_images__store_id"
+          ],
+          "x": 1640,
+          "y": 1400,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_experience_campaigns": {
+        "id": "relationship__articles_to_experience_campaigns",
+        "identification": true,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 1800,
+          "y": 580,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "table__experience_campaigns",
+          "columnIds": [
+            "column__experience_campaigns__article_id"
+          ],
+          "x": 2300,
+          "y": 1280,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__stores_to_experience_campaigns": {
+        "id": "relationship__stores_to_experience_campaigns",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__stores",
+          "columnIds": [
+            "column__stores__id"
+          ],
+          "x": 1520,
+          "y": 1340,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__experience_campaigns",
+          "columnIds": [
+            "column__experience_campaigns__store_id"
+          ],
+          "x": 2140,
+          "y": 1360,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__experience_campaigns_to_applications": {
+        "id": "relationship__experience_campaigns_to_applications",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__experience_campaigns",
+          "columnIds": [
+            "column__experience_campaigns__article_id"
+          ],
+          "x": 2500,
+          "y": 1360,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__experience_applications",
+          "columnIds": [
+            "column__experience_applications__campaign_id"
+          ],
+          "x": 2640,
+          "y": 1420,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_experience_applications": {
+        "id": "relationship__auth_user_to_experience_applications",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__experience_applications",
+          "columnIds": [
+            "column__experience_applications__user_id"
+          ],
+          "x": 2640,
+          "y": 1420,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__experience_applications_to_reviews": {
+        "id": "relationship__experience_applications_to_reviews",
+        "identification": true,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__experience_applications",
+          "columnIds": [
+            "column__experience_applications__id"
+          ],
+          "x": 3000,
+          "y": 1420,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__experience_reviews",
+          "columnIds": [
+            "column__experience_reviews__application_id"
+          ],
+          "x": 3140,
+          "y": 1480,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_experience_reviews": {
+        "id": "relationship__articles_to_experience_reviews",
+        "identification": false,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__experience_reviews",
+          "columnIds": [
+            "column__experience_reviews__article_id"
+          ],
+          "x": 3140,
+          "y": 1480,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_user_experience_temperatures": {
+        "id": "relationship__auth_user_to_user_experience_temperatures",
+        "identification": true,
+        "relationshipType": 2,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__user_experience_temperatures",
+          "columnIds": [
+            "column__user_experience_temperatures__user_id"
+          ],
+          "x": 3140,
+          "y": 1860,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__auth_user_to_notifications": {
+        "id": "relationship__auth_user_to_notifications",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__auth_user",
+          "columnIds": [
+            "column__auth_user__id"
+          ],
+          "x": 480,
+          "y": 240,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__notifications",
+          "columnIds": [
+            "column__notifications__user_id"
+          ],
+          "x": 3640,
+          "y": 1160,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__articles_to_notifications": {
+        "id": "relationship__articles_to_notifications",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__articles",
+          "columnIds": [
+            "column__articles__id"
+          ],
+          "x": 2000,
+          "y": 400,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__notifications",
+          "columnIds": [
+            "column__notifications__target_article_id"
+          ],
+          "x": 3640,
+          "y": 1160,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781079157796,
+          "createAt": 1781079157796
+        }
+      },
+      "relationship__experience_campaigns_to_notifications": {
+        "id": "relationship__experience_campaigns_to_notifications",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "table__experience_campaigns",
+          "columnIds": [
+            "column__experience_campaigns__article_id"
+          ],
+          "x": 2500,
+          "y": 1360,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "table__notifications",
+          "columnIds": [
+            "column__notifications__target_campaign_id"
+          ],
+          "x": 3640,
+          "y": 1160,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      }
+    },
+    "indexEntities": {
+      "index__uq_experience_applications_campaign_user": {
+        "id": "index__uq_experience_applications_campaign_user",
+        "name": "uq_experience_applications_campaign_user",
+        "tableId": "table__experience_applications",
+        "indexColumnIds": [
+          "index_column__uq_experience_applications_campaign_user__campaign_id__0",
+          "index_column__uq_experience_applications_campaign_user__user_id__1"
+        ],
+        "seqIndexColumnIds": [
+          "index_column__uq_experience_applications_campaign_user__campaign_id__0",
+          "index_column__uq_experience_applications_campaign_user__user_id__1"
+        ],
+        "unique": true,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index__uq_terms_agreements_user_type_version": {
+        "id": "index__uq_terms_agreements_user_type_version",
+        "name": "uq_terms_agreements_user_type_version",
+        "tableId": "table__terms_agreements",
+        "indexColumnIds": [
+          "index_column__uq_terms_agreements_user_type_version__user_id__0",
+          "index_column__uq_terms_agreements_user_type_version__terms_type__1",
+          "index_column__uq_terms_agreements_user_type_version__terms_version__2"
+        ],
+        "seqIndexColumnIds": [
+          "index_column__uq_terms_agreements_user_type_version__user_id__0",
+          "index_column__uq_terms_agreements_user_type_version__terms_type__1",
+          "index_column__uq_terms_agreements_user_type_version__terms_version__2"
+        ],
+        "unique": true,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index__uq_regions_sido_sigungu_dong": {
+        "id": "index__uq_regions_sido_sigungu_dong",
+        "name": "uq_regions_sido_sigungu_dong",
+        "tableId": "table__regions",
+        "indexColumnIds": [
+          "index_column__uq_regions_sido_sigungu_dong__sido__0",
+          "index_column__uq_regions_sido_sigungu_dong__sigungu__1",
+          "index_column__uq_regions_sido_sigungu_dong__dong__2"
+        ],
+        "seqIndexColumnIds": [
+          "index_column__uq_regions_sido_sigungu_dong__sido__0",
+          "index_column__uq_regions_sido_sigungu_dong__sigungu__1",
+          "index_column__uq_regions_sido_sigungu_dong__dong__2"
+        ],
+        "unique": true,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index__uq_article_categories_board_parent_name": {
+        "id": "index__uq_article_categories_board_parent_name",
+        "name": "uq_article_categories_board_parent_name",
+        "tableId": "table__article_categories",
+        "indexColumnIds": [
+          "index_column__uq_article_categories_board_parent_name__board_id__0",
+          "index_column__uq_article_categories_board_parent_name__parent_id__1",
+          "index_column__uq_article_categories_board_parent_name__name__2"
+        ],
+        "seqIndexColumnIds": [
+          "index_column__uq_article_categories_board_parent_name__board_id__0",
+          "index_column__uq_article_categories_board_parent_name__parent_id__1",
+          "index_column__uq_article_categories_board_parent_name__name__2"
+        ],
+        "unique": true,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      }
+    },
+    "indexColumnEntities": {
+      "index_column__uq_experience_applications_campaign_user__campaign_id__0": {
+        "id": "index_column__uq_experience_applications_campaign_user__campaign_id__0",
+        "indexId": "index__uq_experience_applications_campaign_user",
+        "columnId": "column__experience_applications__campaign_id",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_experience_applications_campaign_user__user_id__1": {
+        "id": "index_column__uq_experience_applications_campaign_user__user_id__1",
+        "indexId": "index__uq_experience_applications_campaign_user",
+        "columnId": "column__experience_applications__user_id",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_terms_agreements_user_type_version__user_id__0": {
+        "id": "index_column__uq_terms_agreements_user_type_version__user_id__0",
+        "indexId": "index__uq_terms_agreements_user_type_version",
+        "columnId": "column__terms_agreements__user_id",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_terms_agreements_user_type_version__terms_type__1": {
+        "id": "index_column__uq_terms_agreements_user_type_version__terms_type__1",
+        "indexId": "index__uq_terms_agreements_user_type_version",
+        "columnId": "column__terms_agreements__terms_type",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_terms_agreements_user_type_version__terms_version__2": {
+        "id": "index_column__uq_terms_agreements_user_type_version__terms_version__2",
+        "indexId": "index__uq_terms_agreements_user_type_version",
+        "columnId": "column__terms_agreements__terms_version",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_regions_sido_sigungu_dong__sido__0": {
+        "id": "index_column__uq_regions_sido_sigungu_dong__sido__0",
+        "indexId": "index__uq_regions_sido_sigungu_dong",
+        "columnId": "column__regions__sido",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_regions_sido_sigungu_dong__sigungu__1": {
+        "id": "index_column__uq_regions_sido_sigungu_dong__sigungu__1",
+        "indexId": "index__uq_regions_sido_sigungu_dong",
+        "columnId": "column__regions__sigungu",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_regions_sido_sigungu_dong__dong__2": {
+        "id": "index_column__uq_regions_sido_sigungu_dong__dong__2",
+        "indexId": "index__uq_regions_sido_sigungu_dong",
+        "columnId": "column__regions__dong",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_article_categories_board_parent_name__board_id__0": {
+        "id": "index_column__uq_article_categories_board_parent_name__board_id__0",
+        "indexId": "index__uq_article_categories_board_parent_name",
+        "columnId": "column__article_categories__board_id",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_article_categories_board_parent_name__parent_id__1": {
+        "id": "index_column__uq_article_categories_board_parent_name__parent_id__1",
+        "indexId": "index__uq_article_categories_board_parent_name",
+        "columnId": "column__article_categories__parent_id",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      },
+      "index_column__uq_article_categories_board_parent_name__name__2": {
+        "id": "index_column__uq_article_categories_board_parent_name__name__2",
+        "indexId": "index__uq_article_categories_board_parent_name",
+        "columnId": "column__article_categories__name",
+        "orderType": 1,
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781082096420
+        }
+      }
+    },
+    "memoEntities": {
+      "memo__overview": {
+        "id": "memo__overview",
+        "value": "Closet 프로젝트 ERD 개정본\n- Django 기본 auth_user 사용\n- user_profiles/business_profiles는 auth_user 1:1 확장 테이블\n- 순수 관계 테이블은 두 FK를 복합 PK로 사용\n- 체험단 신청은 후기 테이블에서 참조하므로 id PK + (campaign_id, user_id) unique 유지",
+        "ui": {
+          "x": 4020,
+          "y": 180,
+          "zIndex": 1000,
+          "width": 850,
+          "height": 180,
+          "color": "#E3F2FD"
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      },
+      "memo__mvp_note": {
+        "id": "memo__mvp_note",
+        "value": "Django 구현 주의\n- ERD상 복합 PK는 순수 중간 테이블에만 적용\n- 다른 테이블이 참조해야 하는 테이블은 Django ORM 편의성을 위해 단일 PK 유지\n- auth_group/auth_permission 등 Django 기본 권한 테이블은 프로젝트 ERD에서 생략",
+        "ui": {
+          "x": 4020,
+          "y": 420,
+          "zIndex": 1001,
+          "width": 850,
+          "height": 170,
+          "color": "#FFF8E1"
+        },
+        "meta": {
+          "updateAt": 1781082096420,
+          "createAt": 1781079157796
+        }
+      }
+    }
+  }
+}
