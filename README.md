@@ -1,5 +1,7 @@
 # 지켜야할 사항
 1. pip install 하면 requirements.txt 업데이트 해놓기
+2. common/models.py
+    L 여러 앱에서 공통적으로 사용할 모델들
 
 # 프로젝트 구조
 프로젝트 명 : closet

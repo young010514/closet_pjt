@@ -1,3 +1,10 @@
 from django.shortcuts import render
+from .models import Region
 
-# Create your views here.
+
+def region_list(request):
+    regions = Region.objects.filter(is_active=True)
+
+    return render(request, "regions/region_list.html", {
+        "regions": regions,
+    })
