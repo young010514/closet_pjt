@@ -1,67 +1,178 @@
-# 검증 필요
+# accounts/views.py
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import login as auth_login, logout as auth_logout
-# 필요한 폼이 있다면 여기에 import 하세요
-# from .forms import NormalUserCreationForm, BusinessUserCreationForm, CustomLoginForm
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
+from django.db import IntegrityError
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
+from .serializers import (
+    BusinessSignupSerializer,
+    CurrentUserSerializer,
+    LoginSerializer,
+    NormalSignupSerializer,
+    UserRegionReorderSerializer,
+    UserRegionSerializer,
+)
+
+
+SIGNUP_CONFLICT_RESPONSE = {
+    "detail": (
+        "이미 사용 중인 회원 정보가 있습니다. "
+        "아이디, 이메일, 닉네임, 전화번호 등을 확인해 주세요."
+    )
+}
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def signup_select(request):
-    """
-    회원가입 유형 선택 페이지 (일반 회원 / 기업 회원)
-    """
-    return render(request, "accounts/signup_select.html")
+    """회원가입 유형 목록 API."""
+    return Response(
+        {
+            "signup_types": [
+                {
+                    "type": "normal",
+                    "label": "일반 회원",
+                    "endpoint": "/api/accounts/signup/normal/",
+                },
+                {
+                    "type": "business",
+                    "label": "사업자 회원",
+                    "endpoint": "/api/accounts/signup/business/",
+                },
+            ]
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def normal_signup(request):
-    """
-    일반 회원가입 처리
-    """
-    if request.method == "POST":
-        # 폼 데이터 검증 및 저장 로직 구현 필요
-        pass
-    else:
-        # 폼 생성
-        pass
-    return render(request, "accounts/normal_signup.html")
+    """일반 회원가입 API."""
+    serializer = NormalSignupSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    try:
+        user = serializer.save()
+    except IntegrityError:
+        # serializer의 사전 중복 검사와 DB INSERT 사이에
+        # 동일 값이 동시에 저장된 경우 DB UNIQUE 제약이 최종 차단한다.
+        return Response(
+            SIGNUP_CONFLICT_RESPONSE,
+            status=status.HTTP_409_CONFLICT,
+        )
+
+    # 현재는 Django 세션 인증을 사용한다.
+    auth_login(request, user)
+
+    return Response(
+        {
+            "message": "일반 회원가입이 완료되었습니다.",
+            "user": CurrentUserSerializer(user).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def business_signup(request):
-    """
-    기업 회원가입 처리
-    """
-    if request.method == "POST":
-        # 폼 데이터 검증 및 저장 로직 구현 필요
-        pass
-    else:
-        # 폼 생성
-        pass
-    return render(request, "accounts/business_signup.html")
+    """사업자 회원가입 API."""
+    serializer = BusinessSignupSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    try:
+        user = serializer.save()
+    except IntegrityError:
+        return Response(
+            SIGNUP_CONFLICT_RESPONSE,
+            status=status.HTTP_409_CONFLICT,
+        )
+
+    auth_login(request, user)
+
+    return Response(
+        {
+            "message": "사업자 회원가입이 완료되었습니다.",
+            "user": CurrentUserSerializer(user).data,
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def login_view(request):
-    """
-    로그인 처리
-    """
-    if request.method == "POST":
-        # 로그인 인증 로직 구현 필요
-        pass
-    else:
-        # 로그인 폼 생성
-        pass
-    return render(request, "accounts/login.html")
+    """아이디와 비밀번호를 사용하는 세션 로그인 API."""
+    serializer = LoginSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    user = serializer.validated_data["user"]
+    auth_login(request, user)
+
+    return Response(
+        {
+            "message": "로그인 성공",
+            "user": CurrentUserSerializer(user).data,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def logout_view(request):
-    """
-    로그아웃 처리 후 메인 페이지 등으로 리다이렉트
-    """
+    """현재 세션을 종료하는 로그아웃 API."""
     auth_logout(request)
-    return redirect("index")  # 'index'는 메인 페이지 url name에 맞게 변경하세요.
+
+    return Response(
+        {"message": "로그아웃되었습니다."},
+        status=status.HTTP_200_OK,
+    )
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def mypage(request):
-    """
-    마이페이지 (일반적으로 로그인 필요)
-    """
-    # @login_required 데코레이터를 붙이거나 request.user.is_authenticated 확인 필요
-    return render(request, "accounts/mypage.html")
+    """현재 로그인 사용자의 계정·프로필·지역 정보를 반환한다."""
+    return Response(
+        CurrentUserSerializer(request.user).data,
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def reorder_user_regions(request):
+    """현재 사용자가 등록한 지역의 우선순위를 일괄 변경한다."""
+    serializer = UserRegionReorderSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    user_regions = serializer.save()
+
+    return Response(
+        {
+            "message": "지역 우선순위가 변경되었습니다.",
+            "regions": UserRegionSerializer(
+                user_regions,
+                many=True,
+            ).data,
+        },
+        status=status.HTTP_200_OK,
+    )

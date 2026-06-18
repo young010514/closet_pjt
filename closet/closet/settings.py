@@ -41,9 +41,11 @@ INSTALLED_APPS = [
     'accounts',
     'common',
     'community',
-    
+    "rest_framework",
 
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
