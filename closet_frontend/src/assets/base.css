@@ -1,0 +1,77 @@
+﻿:root {
+  --color-background: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f4;
+  --color-border: #d7dedb;
+  --color-border-strong: #aebbb6;
+  --color-text: #24302d;
+  --color-text-muted: #687672;
+  --color-heading: #17211e;
+  --color-accent: #2f7d6d;
+  --color-accent-dark: #246254;
+  --color-accent-soft: #e4f1ee;
+  --color-danger: #b42318;
+  --color-danger-soft: #fee4e2;
+  --color-info-soft: #e8f1fb;
+  --color-info: #24577a;
+  --shadow-panel: 0 16px 48px rgba(31, 42, 38, 0.1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.5;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+a {
+  color: var(--color-accent-dark);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

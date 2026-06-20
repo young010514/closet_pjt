@@ -4,6 +4,8 @@ from . import views
 app_name = "accounts"
 
 urlpatterns = [
+    path("csrf/", views.csrf_token, name="csrf_token"),
+
     path("signup/", views.signup_select, name="signup_select"),
     path("signup/normal/", views.normal_signup, name="normal_signup"),
     path("signup/business/", views.business_signup, name="business_signup"),

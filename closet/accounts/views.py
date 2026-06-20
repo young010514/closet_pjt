@@ -8,6 +8,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+# 안전하지 않은 HTTP 요청에 CSRF 토큰을 포함해야한다고 안내하는 ?
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import csrf_protect
+
 from .serializers import (
     BusinessSignupSerializer,
     CurrentUserSerializer,
@@ -25,6 +29,14 @@ SIGNUP_CONFLICT_RESPONSE = {
     )
 }
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def csrf_token(request):
+    """Vue 클라이언트에 CSRF 쿠키와 토큰을 발급한다."""
+    return Response(
+        {"csrfToken": get_token(request)},
+        status=status.HTTP_200_OK,
+    )
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -51,6 +63,7 @@ def signup_select(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@csrf_protect
 def normal_signup(request):
     """일반 회원가입 API."""
     serializer = NormalSignupSerializer(
@@ -83,6 +96,7 @@ def normal_signup(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@csrf_protect
 def business_signup(request):
     """사업자 회원가입 API."""
     serializer = BusinessSignupSerializer(
@@ -112,6 +126,7 @@ def business_signup(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@csrf_protect
 def login_view(request):
     """아이디와 비밀번호를 사용하는 세션 로그인 API."""
     serializer = LoginSerializer(
