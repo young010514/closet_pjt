@@ -36,12 +36,21 @@ export async function getCurrentUser() {
   return response.data
 }
 
-export async function reorderRegions(regionIds) {
+export async function getMyRegions() {
+  const response = await api.get(`${ACCOUNT_BASE}/me/regions/`)
+  return response.data
+}
+
+export async function updateMyRegions(regionIds) {
   await initializeCsrf()
-  const response = await api.put(`${ACCOUNT_BASE}/regions/reorder/`, {
+  const response = await api.put(`${ACCOUNT_BASE}/me/regions/`, {
     region_ids: regionIds,
   })
   return response.data
+}
+
+export async function reorderRegions(regionIds) {
+  return updateMyRegions(regionIds)
 }
 
 export function normalizeApiError(error) {
