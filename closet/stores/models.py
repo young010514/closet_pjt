@@ -113,6 +113,12 @@ class Store(TimeStampedModel, ActiveModel):
         verbose_name="웹사이트 주소",
     )
 
+    view_count = models.PositiveBigIntegerField(
+        default=0,
+        db_index=True,
+        verbose_name="조회수",
+    )
+
     data_source = models.CharField(
         max_length=100,
         blank=True,
