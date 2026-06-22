@@ -188,7 +188,7 @@ onMounted(() => applyFilters())
 
     <ul v-else class="post-list">
       <li v-for="post in store.posts" :key="post.id" class="post-item">
-        <RouterLink :to="`/community/${post.id}`" class="post-link">
+        <article class="post-card">
           <div class="post-meta">
             <span class="badge board-badge">{{ BOARD_LABEL[post.board] ?? post.board }}</span>
             <span v-if="post.category" class="badge">{{ CATEGORY_LABEL[post.category] ?? post.category }}</span>
@@ -200,13 +200,22 @@ onMounted(() => applyFilters())
               {{ EXPERIENCE_STATUS_LABEL[post.experience_status] }}
             </span>
           </div>
-          <p class="post-title">{{ post.title }}</p>
+          <RouterLink :to="`/community/${post.id}`" class="post-title-link">
+            <p class="post-title">{{ post.title }}</p>
+          </RouterLink>
           <div class="post-info">
-            <span>{{ post.author_name }}</span>
+            <RouterLink
+              v-if="post.author"
+              class="post-author-link"
+              :to="{ name: 'user-profile', params: { userId: post.author } }"
+            >
+              {{ post.author_name }}
+            </RouterLink>
+            <span v-else>{{ post.author_name }}</span>
             <span>조회 {{ post.view_count }}</span>
             <span>좋아요 {{ post.like_count }}</span>
           </div>
-        </RouterLink>
+        </article>
       </li>
     </ul>
   </div>
@@ -275,8 +284,8 @@ onMounted(() => applyFilters())
 /* 게시글 목록 */
 .post-list { list-style: none; padding: 0; }
 .post-item { border-bottom: 1px solid #eee; }
-.post-link { display: block; padding: 0.8rem 0; text-decoration: none; color: inherit; }
-.post-link:hover { background: #f9f9f9; }
+.post-card { display: grid; gap: 0.2rem; padding: 0.8rem 0; }
+.post-card:hover { background: #f9f9f9; }
 .post-meta { display: flex; gap: 0.4rem; margin-bottom: 0.3rem; align-items: center; }
 .badge { font-size: 0.75rem; padding: 0.1rem 0.4rem; background: #eee; border-radius: 3px; }
 .board-badge { background: #e8f0fe; color: #3c5fbe; }
@@ -284,7 +293,17 @@ onMounted(() => applyFilters())
 .status-recruiting { background: #e6f4ea; color: #1e7e34; }
 .status-closed { background: #fff3cd; color: #856404; }
 .status-ended { background: #f8d7da; color: #721c24; }
+.post-title-link { color: inherit; text-decoration: none; }
+.post-title-link:hover .post-title { text-decoration: underline; }
 .post-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.3rem; }
 .post-info { display: flex; gap: 1rem; font-size: 0.8rem; color: #888; }
+.post-author-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+.post-author-link:hover {
+  text-decoration: underline;
+}
 .error { color: red; }
 </style>

@@ -24,6 +24,8 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['change'])
+
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -83,6 +85,11 @@ async function handleToggle() {
     const result = await toggleFollow(props.targetUserId)
     isFollowing.value = Boolean(result.is_following)
     followerCount.value = Number(result.follower_count ?? followerCount.value)
+    emit('change', {
+      is_following: isFollowing.value,
+      follower_count: followerCount.value,
+      following_count: Number(result.following_count ?? 0),
+    })
   } catch (error) {
     isFollowing.value = previousState.isFollowing
     followerCount.value = previousState.followerCount

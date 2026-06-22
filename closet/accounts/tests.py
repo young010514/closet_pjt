@@ -5,7 +5,14 @@ from regions.models import Region
 
 from .models import Follow, User, UserProfile, UserRegion
 from .serializers import NormalSignupSerializer
-from .views import MyRegionView, mypage, toggle_follow, user_followers, user_following
+from .views import (
+    MyRegionView,
+    mypage,
+    toggle_follow,
+    user_followers,
+    user_following,
+    user_profile,
+)
 
 
 class NormalSignupRegionTests(TestCase):
@@ -326,3 +333,50 @@ class FollowViewTests(TestCase):
         self.assertEqual(response.data["profile"]["follower_count"], 0)
         self.assertEqual(response.data["profile"]["following_count"], 2)
         self.assertFalse(response.data["profile"]["is_following"])
+
+
+class PublicUserProfileViewTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.alice = create_user_with_profile(
+            "alice",
+            "alice@example.com",
+            "앨리스",
+            "01011110000",
+        )
+        self.bob = create_user_with_profile(
+            "bob",
+            "bob@example.com",
+            "밥",
+            "01011110001",
+        )
+
+    def test_user_profile_returns_public_summary_and_follow_state(self):
+        Follow.objects.create(follower=self.alice, following=self.bob)
+
+        request = self.factory.get(f"/api/accounts/users/{self.bob.id}/")
+        force_authenticate(request, user=self.alice)
+
+        response = user_profile(request, self.bob.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["id"], self.bob.id)
+        self.assertEqual(response.data["username"], "bob")
+        self.assertEqual(response.data["nickname"], "밥")
+        self.assertIsNone(response.data["profile_image"])
+        self.assertEqual(response.data["follower_count"], 1)
+        self.assertEqual(response.data["following_count"], 0)
+        self.assertTrue(response.data["is_following"])
+
+        anonymous_request = self.factory.get(f"/api/accounts/users/{self.bob.id}/")
+        anonymous_response = user_profile(anonymous_request, self.bob.id)
+
+        self.assertEqual(anonymous_response.status_code, 200)
+        self.assertFalse(anonymous_response.data["is_following"])
+
+    def test_user_profile_returns_404_for_missing_user(self):
+        request = self.factory.get("/api/accounts/users/9999/")
+
+        response = user_profile(request, 9999)
+
+        self.assertEqual(response.status_code, 404)

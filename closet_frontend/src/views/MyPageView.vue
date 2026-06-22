@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
 import { getMyRegions, normalizeApiError, updateMyRegions } from '@/api/accounts'
 import RegionSelector from '@/components/RegionSelector.vue'
@@ -116,9 +116,18 @@ onMounted(loadRegions)
           <p class="eyebrow">My Page</p>
           <h1>마이페이지</h1>
         </div>
-        <button class="button button--secondary" type="button" :disabled="authStore.isLoading" @click="logout">
-          로그아웃
-        </button>
+        <div class="form-actions">
+          <RouterLink
+            v-if="user"
+            class="button button--secondary"
+            :to="{ name: 'user-profile', params: { userId: user.id } }"
+          >
+            공개 프로필 보기
+          </RouterLink>
+          <button class="button button--secondary" type="button" :disabled="authStore.isLoading" @click="logout">
+            로그아웃
+          </button>
+        </div>
       </div>
 
       <div v-if="!user" class="alert alert--info">사용자 정보를 불러오는 중입니다.</div>

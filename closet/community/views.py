@@ -32,16 +32,40 @@ def save_images(post, image_files):
         PostImage.objects.create(post=post, image=f, order=idx)
 
 
+def parse_author_filter(request):
+    author_value = request.query_params.get('author')
+
+    if author_value in (None, ''):
+        return None, None
+
+    try:
+        author_id = int(author_value)
+    except (TypeError, ValueError):
+        return None, Response(
+            {'detail': '작성자 필터가 올바르지 않습니다.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if author_id < 1:
+        return None, Response(
+            {'detail': '작성자 필터가 올바르지 않습니다.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return author_id, None
+
+
 class PostListCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get(self, request):
-        queryset = Post.objects.all()
+        queryset = Post.objects.select_related('author', 'author__profile').prefetch_related('images')
 
         board = request.query_params.get('board')
         gender = request.query_params.get('gender')
         category = request.query_params.get('category')
         ordering = request.query_params.get('ordering', 'latest')
+        author_id, author_error = parse_author_filter(request)
 
         if board:
             queryset = queryset.filter(board=board)
@@ -49,6 +73,10 @@ class PostListCreateView(APIView):
             queryset = queryset.filter(gender=gender)
         if category:
             queryset = queryset.filter(category=category)
+        if author_error is not None:
+            return author_error
+        if author_id is not None:
+            queryset = queryset.filter(author_id=author_id)
 
         queryset = queryset.order_by(ORDERING_MAP.get(ordering, '-created_at'))
 

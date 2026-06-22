@@ -240,6 +240,28 @@ def serialize_public_users(request, queryset):
     return serializer.data
 
 
+def serialize_public_user(request, user):
+    serializer = PublicUserSerializer(
+        user,
+        context={"request": request},
+    )
+    return serializer.data
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def user_profile(request, user_id):
+    target_user = get_object_or_404(
+        build_public_user_queryset(User.objects.all()),
+        pk=user_id,
+    )
+
+    return Response(
+        serialize_public_user(request, target_user),
+        status=status.HTTP_200_OK,
+    )
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def toggle_follow(request, user_id):

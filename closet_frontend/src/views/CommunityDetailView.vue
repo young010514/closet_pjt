@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import FollowButton from '@/components/FollowButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
@@ -109,8 +109,17 @@ async function handleDelete() {
 
       <div class="meta">
         <div class="author-meta">
-          <span class="author-name">{{ authorDisplayName }}</span>
-          <span v-if="authorProfile" class="author-username">@{{ authorProfile.username }}</span>
+          <RouterLink
+            v-if="authorProfile"
+            class="author-link"
+            :to="{ name: 'user-profile', params: { userId: authorProfile.id } }"
+          >
+            <span class="author-name">{{ authorDisplayName }}</span>
+            <span class="author-username">@{{ authorProfile.username }}</span>
+          </RouterLink>
+          <template v-else>
+            <span class="author-name">{{ authorDisplayName }}</span>
+          </template>
         </div>
 
         <FollowButton
@@ -191,6 +200,15 @@ h1 { font-size: 1.4rem; margin-bottom: 0.75rem; }
   display: grid;
   gap: 0.15rem;
   min-width: 0;
+}
+.author-link {
+  display: grid;
+  gap: 0.15rem;
+  color: inherit;
+  text-decoration: none;
+}
+.author-link:hover .author-name {
+  text-decoration: underline;
 }
 .author-name {
   color: #222;
