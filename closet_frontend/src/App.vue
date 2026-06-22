@@ -33,6 +33,7 @@ async function logout() {
 
       <nav class="topnav" aria-label="주요 메뉴">
         <template v-if="isAuthenticated">
+          <RouterLink to="/community">커뮤니티</RouterLink>
           <RouterLink to="/mypage">마이페이지</RouterLink>
           <button type="button" class="nav-button" :disabled="isLoggingOut" @click="logout">
             {{ isLoggingOut ? '로그아웃 중' : '로그아웃' }}
