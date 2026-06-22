@@ -122,13 +122,6 @@ async function handleDelete() {
           </template>
         </div>
 
-        <FollowButton
-          v-if="authorProfile"
-          :target-user-id="authorProfile.id"
-          :initial-is-following="authorProfile.is_following"
-          :initial-follower-count="authorProfile.follower_count"
-          :is-me="isAuthorSelf"
-        />
       </div>
 
       <!-- 이미지 갤러리 -->

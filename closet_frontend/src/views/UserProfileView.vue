@@ -77,8 +77,14 @@ async function loadProfile(targetUserId) {
 
   isLoadingPosts.value = true
   try {
-    const data = await getPosts({ author: targetUserId })
-    posts.value = Array.isArray(data) ? data : []
+    const response = await getPosts({ author: targetUserId })
+    const data = response.data
+
+    posts.value = Array.isArray(data)
+      ? data
+      : Array.isArray(data.results)
+        ? data.results
+        : []
   } catch (error) {
     const normalized = normalizeApiError(error)
     postsError.value = normalized.message
