@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useCommunityStore } from '@/stores/community'
 
@@ -14,6 +14,10 @@ const filters = reactive({
   category: '',
   ordering: 'latest',
 })
+
+const searchInput = ref('')
+const appliedSearch = ref('')
+const showSearch = computed(() => filters.board !== 'local_shop')
 
 const BOARD_TABS = [
   { value: 'fashion', label: '패션 정보 공유' },
@@ -85,6 +89,9 @@ function selectBoard(value) {
   filters.board = value
   filters.gender = ''
   filters.category = ''
+  if (value === 'local_shop') filters.ordering = 'latest'
+  searchInput.value = ''
+  appliedSearch.value = ''
   applyFilters()
 }
 
@@ -93,7 +100,19 @@ function applyFilters() {
   if (filters.gender) params.gender = filters.gender
   if (filters.category) params.category = filters.category
   if (filters.ordering) params.ordering = filters.ordering
+  if (appliedSearch.value) params.search = appliedSearch.value
   store.fetchPosts(params)
+}
+
+function submitSearch() {
+  appliedSearch.value = searchInput.value.trim()
+  applyFilters()
+}
+
+function clearSearch() {
+  searchInput.value = ''
+  appliedSearch.value = ''
+  applyFilters()
 }
 
 onMounted(() => applyFilters())
@@ -176,14 +195,36 @@ onMounted(() => applyFilters())
     </div>
 
     <!-- 정렬 -->
-    <div class="ordering-row">
+    <div v-if="filters.board !== 'local_shop'" class="ordering-row">
       <select v-model="filters.ordering" @change="applyFilters">
         <option v-for="o in ORDERING_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
       </select>
     </div>
 
+    <!-- 검색 -->
+    <div v-if="showSearch" class="search-row">
+      <div class="search-box">
+        <input
+          v-model="searchInput"
+          type="text"
+          class="search-input"
+          placeholder="제목 또는 내용으로 검색"
+          @keydown.enter="submitSearch"
+        />
+        <button v-if="searchInput" class="btn-search-clear" @click="clearSearch" aria-label="검색어 지우기">✕</button>
+        <button class="btn-search" @click="submitSearch">검색</button>
+      </div>
+      <p v-if="appliedSearch" class="search-applied">
+        "<strong>{{ appliedSearch }}</strong>" 검색 결과
+        <button class="btn-search-reset" @click="clearSearch">전체 보기</button>
+      </p>
+    </div>
+
     <p v-if="store.isLoading">불러오는 중...</p>
     <p v-else-if="store.error" class="error">{{ store.error }}</p>
+    <p v-else-if="store.posts.length === 0 && appliedSearch">
+      "<strong>{{ appliedSearch }}</strong>"에 대한 검색 결과가 없습니다.
+    </p>
     <p v-else-if="store.posts.length === 0">게시글이 없습니다.</p>
 
     <ul v-else class="post-list">
@@ -280,6 +321,47 @@ onMounted(() => applyFilters())
   margin: 0.75rem 0;
 }
 .ordering-row select { padding: 0.3rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.85rem; }
+
+/* 검색 */
+.search-row { margin: 0.5rem 0 0.75rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.search-box { display: flex; gap: 0; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; }
+.search-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  outline: none;
+  font-size: 0.9rem;
+}
+.btn-search-clear {
+  background: none;
+  border: none;
+  padding: 0 0.5rem;
+  cursor: pointer;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+.btn-search-clear:hover { color: #555; }
+.btn-search {
+  padding: 0.5rem 1rem;
+  background: #333;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-search:hover { background: #111; }
+.search-applied { font-size: 0.85rem; color: #555; display: flex; align-items: center; gap: 0.5rem; }
+.btn-search-reset {
+  background: none;
+  border: none;
+  color: #3c5fbe;
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  padding: 0;
+}
 
 /* 게시글 목록 */
 .post-list { list-style: none; padding: 0; }

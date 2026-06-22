@@ -16,6 +16,9 @@ const error = ref('')
 const imageFiles = ref([])
 const imagePreviewUrls = ref([])
 const existingImages = ref([])
+const videoFiles = ref([])
+const videoPreviews = ref([])
+const existingVideos = ref([])
 
 const NOTICE_TEMPLATE = `■ 체험단 인원:
 ■ 신청 방법:
@@ -80,6 +83,7 @@ const EXPERIENCE_CATEGORIES = [
 
 const showGender = computed(() => form.board === 'fashion')
 const showCategory = computed(() => ['fashion', 'daily', 'experience'].includes(form.board))
+const isGeneralBoard = computed(() => ['fashion', 'daily'].includes(form.board))
 const isExperienceRecruit = computed(() => form.board === 'experience' && form.category === 'recruit')
 const isExperienceReview = computed(() => form.board === 'experience' && form.category === 'review')
 const isExperience = computed(() => form.board === 'experience')
@@ -117,6 +121,8 @@ watch(() => form.board, (newBoard) => {
   form.experience_participation_end = ''
   imageFiles.value = []
   imagePreviewUrls.value = []
+  videoFiles.value = []
+  videoPreviews.value = []
 
   if (newBoard === 'fashion') form.category = 'top'
   else if (newBoard === 'daily') form.category = 'lifestyle'
@@ -132,6 +138,8 @@ watch(() => form.category, () => {
   form.experience_participation_end = ''
   imageFiles.value = []
   imagePreviewUrls.value = []
+  videoFiles.value = []
+  videoPreviews.value = []
 })
 
 function onImagesChange(e) {
@@ -143,6 +151,17 @@ function onImagesChange(e) {
 function removeImage(idx) {
   imageFiles.value = imageFiles.value.filter((_, i) => i !== idx)
   imagePreviewUrls.value = imagePreviewUrls.value.filter((_, i) => i !== idx)
+}
+
+function onVideosChange(e) {
+  const files = Array.from(e.target.files)
+  videoFiles.value = files
+  videoPreviews.value = files.map((f) => URL.createObjectURL(f))
+}
+
+function removeVideo(idx) {
+  videoFiles.value = videoFiles.value.filter((_, i) => i !== idx)
+  videoPreviews.value = videoPreviews.value.filter((_, i) => i !== idx)
 }
 
 onMounted(async () => {
@@ -166,6 +185,7 @@ onMounted(async () => {
       form.experience_participation_start = p.experience_participation_start ?? ''
       form.experience_participation_end = p.experience_participation_end ?? ''
       existingImages.value = p.images ?? []
+      existingVideos.value = p.videos ?? []
     }
   }
 })
@@ -199,6 +219,9 @@ function buildPayload() {
 
   if (imageFiles.value.length > 0) {
     payload.images = imageFiles.value
+  }
+  if (videoFiles.value.length > 0) {
+    payload.videos = videoFiles.value
   }
 
   return payload
@@ -385,6 +408,42 @@ async function submit() {
           <label>해시태그 <small>(공백으로 구분, 예: #데일리 #코디)</small></label>
           <input v-model="form.hashtags" type="text" placeholder="#해시태그 #입력" />
         </div>
+
+        <!-- 이미지 업로드 (패션·일상) -->
+        <template v-if="isGeneralBoard">
+          <div class="field">
+            <label>이미지</label>
+            <input type="file" accept="image/*" multiple @change="onImagesChange" />
+            <div v-if="imagePreviewUrls.length" class="image-preview-grid">
+              <div v-for="(url, idx) in imagePreviewUrls" :key="idx" class="preview-item">
+                <img :src="url" alt="미리보기" />
+                <button type="button" class="remove-img" @click="removeImage(idx)">✕</button>
+              </div>
+            </div>
+            <div v-else-if="existingImages.length" class="image-preview-grid">
+              <div v-for="img in existingImages" :key="img.id" class="preview-item">
+                <img :src="img.image_url" alt="기존 이미지" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 영상 업로드 (패션·일상) -->
+          <div class="field">
+            <label>영상 <small>(mp4, mov 등)</small></label>
+            <input type="file" accept="video/*" multiple @change="onVideosChange" />
+            <div v-if="videoPreviews.length" class="video-preview-list">
+              <div v-for="(url, idx) in videoPreviews" :key="idx" class="video-preview-item">
+                <video :src="url" controls class="preview-video" />
+                <button type="button" class="remove-img" @click="removeVideo(idx)">✕</button>
+              </div>
+            </div>
+            <div v-else-if="existingVideos.length" class="video-preview-list">
+              <div v-for="v in existingVideos" :key="v.id" class="video-preview-item">
+                <video :src="v.video_url" controls class="preview-video" />
+              </div>
+            </div>
+          </div>
+        </template>
       </template>
 
       <div class="form-actions">
@@ -419,6 +478,10 @@ textarea { resize: vertical; }
   border-radius: 50%; width: 20px; height: 20px; font-size: 10px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
+
+.video-preview-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.video-preview-item { position: relative; display: inline-block; }
+.preview-video { width: 100%; max-width: 400px; border-radius: 4px; border: 1px solid #ddd; display: block; }
 
 .permission-warning {
   background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px;

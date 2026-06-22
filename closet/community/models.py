@@ -71,7 +71,7 @@ class Post(models.Model):
         today = timezone.localdate()
         if self.experience_end and today > self.experience_end:
             return self.EXPERIENCE_STATUS_ENDED
-        if self.recruit_end and today > self.recruit_end:
+        if self.recruit_end and today >= self.recruit_end:
             return self.EXPERIENCE_STATUS_CLOSED
         if self.recruit_start and today >= self.recruit_start:
             return self.EXPERIENCE_STATUS_RECRUITING
@@ -94,3 +94,52 @@ class PostImage(models.Model):
 
     def __str__(self):
         return f'{self.post.title} - image {self.order}'
+
+
+class ExperienceApplication(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='applications')
+    applicant = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='experience_applications'
+    )
+    name = models.CharField(max_length=50)
+    phone = models.CharField(max_length=20)
+    sns_account = models.CharField(max_length=100, blank=True, default='')
+    motivation = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'applicant')
+
+    def __str__(self):
+        return f'{self.post.title} - {self.applicant.username}'
+
+
+class PostVideo(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='videos')
+    video = models.FileField(upload_to='post_videos/')
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f'{self.post.title} - video {self.order}'
+
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.post.title} - comment by {self.author}'
