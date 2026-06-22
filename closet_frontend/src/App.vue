@@ -32,6 +32,7 @@ async function logout() {
       <RouterLink class="brand-link" to="/">Closet</RouterLink>
 
       <nav class="topnav" aria-label="주요 메뉴">
+        <RouterLink to="/stores">옷가게 목록</RouterLink>
         <template v-if="isAuthenticated">
           <RouterLink to="/community">커뮤니티</RouterLink>
           <RouterLink to="/mypage">마이페이지</RouterLink>

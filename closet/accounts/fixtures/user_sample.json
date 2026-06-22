@@ -1,0 +1,111 @@
+[
+{
+    "model": "accounts.user",
+    "pk": 1,
+    "fields": {
+        "password": "pbkdf2_sha256$1000000$HG76ukdAVDOulvLKuCU6Df$OxUf0IXQHQVjCgsh4JTdg59xiPEFh08/X+OAs41fj/8=",
+        "last_login": "2026-06-22T00:06:33.142Z",
+        "is_superuser": false,
+        "username": "test1",
+        "first_name": "",
+        "last_name": "",
+        "is_staff": false,
+        "is_active": true,
+        "date_joined": "2026-06-22T00:06:20.430Z",
+        "email": "test1@test.com",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "accounts.user",
+    "pk": 2,
+    "fields": {
+        "password": "pbkdf2_sha256$1000000$PyVl8UrclbVaM27bApM2H2$R0zHWw52k9L9hq4jQLnvxLE6htSxnXS2vITowJnMxZw=",
+        "last_login": "2026-06-22T00:09:27.127Z",
+        "is_superuser": false,
+        "username": "business1",
+        "first_name": "",
+        "last_name": "",
+        "is_staff": false,
+        "is_active": true,
+        "date_joined": "2026-06-22T00:09:26.369Z",
+        "email": "business1@b.com",
+        "groups": [],
+        "user_permissions": []
+    }
+},
+{
+    "model": "accounts.userprofile",
+    "pk": 1,
+    "fields": {
+        "created_at": "2026-06-22T00:06:21.166Z",
+        "updated_at": "2026-06-22T00:06:21.166Z",
+        "user": 1,
+        "user_type": "normal",
+        "real_name": "test",
+        "nickname": "test1",
+        "phone": "01011112222",
+        "birth_date": "2001-05-14",
+        "gender": "F"
+    }
+},
+{
+    "model": "accounts.userprofile",
+    "pk": 2,
+    "fields": {
+        "created_at": "2026-06-22T00:09:27.087Z",
+        "updated_at": "2026-06-22T00:09:27.087Z",
+        "user": 2,
+        "user_type": "business",
+        "real_name": "business",
+        "nickname": "business1",
+        "phone": "01011113333",
+        "birth_date": null,
+        "gender": "N"
+    }
+},
+{
+    "model": "accounts.businessprofile",
+    "pk": 1,
+    "fields": {
+        "created_at": "2026-06-22T00:09:27.088Z",
+        "updated_at": "2026-06-22T00:09:27.088Z",
+        "user": 2,
+        "business_contact_email": "business1@b.com",
+        "business_name": "zara",
+        "business_number": "qwe123",
+        "business_phone": "01011113333",
+        "owner_name": "business",
+        "address": "�ּ�"
+    }
+},
+{
+    "model": "accounts.termsagreement",
+    "pk": 1,
+    "fields": {
+        "created_at": "2026-06-22T00:06:21.169Z",
+        "updated_at": "2026-06-22T00:06:21.169Z",
+        "user": 1,
+        "service_terms_agreed": true,
+        "privacy_agreed": true,
+        "marketing_agreed": true,
+        "service_terms_version": "v1.0",
+        "privacy_terms_version": "v1.0"
+    }
+},
+{
+    "model": "accounts.termsagreement",
+    "pk": 2,
+    "fields": {
+        "created_at": "2026-06-22T00:09:27.090Z",
+        "updated_at": "2026-06-22T00:09:27.090Z",
+        "user": 2,
+        "service_terms_agreed": true,
+        "privacy_agreed": true,
+        "marketing_agreed": true,
+        "service_terms_version": "v1.0",
+        "privacy_terms_version": "v1.0"
+    }
+}
+]

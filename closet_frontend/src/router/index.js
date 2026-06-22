@@ -7,6 +7,8 @@ import CommunityListView from '@/views/CommunityListView.vue'
 import LoginView from '@/views/LoginView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
+import UserProfileView from '@/views/UserProfileView.vue'
+import StoreListView from '@/views/StoreListView.vue'
 import SignupSelectView from '@/views/SignupSelectView.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,7 +18,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/mypage',
+      redirect: '/stores',
+    },
+    {
+      path: '/stores',
+      name: 'stores',
+      component: StoreListView,
     },
     {
       path: '/login',
@@ -47,6 +54,11 @@ const router = createRouter({
       name: 'mypage',
       component: MyPageView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/users/:userId',
+      name: 'user-profile',
+      component: UserProfileView,
     },
     {
       path: '/community',

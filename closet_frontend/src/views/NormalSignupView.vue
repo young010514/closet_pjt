@@ -83,6 +83,11 @@ function validateForm() {
     valid = false
   }
 
+  if (!regions.value.length) {
+    setFieldError('region_ids', '지역을 최소 1개 선택해 주세요.')
+    valid = false
+  }
+
   if (!valid) {
     formErrors.value = ['입력 내용을 확인해 주세요.']
   }
@@ -104,7 +109,7 @@ function buildPayload() {
     service_terms_agreed: terms.value.service_terms_agreed,
     privacy_agreed: terms.value.privacy_agreed,
     marketing_agreed: terms.value.marketing_agreed,
-    regions: regions.value,
+    region_ids: regions.value.map((region) => Number(region.region_id ?? region.id)),
   }
 }
 
@@ -208,7 +213,7 @@ async function submitSignup() {
         </div>
 
         <TermsAgreement v-model="terms" :errors="fieldErrors" />
-        <UserRegionFields v-model="regions" :errors="fieldErrors.regions" />
+        <UserRegionFields v-model="regions" :errors="fieldErrors.region_ids" />
 
         <div class="form-actions">
           <button class="button button--primary" type="submit" :disabled="isSubmitting || authStore.isLoading">

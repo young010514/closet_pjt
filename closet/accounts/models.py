@@ -9,12 +9,7 @@ from .utils import normalize_account_email
 
 
 class UserManager(DjangoUserManager):
-    """
-    프로젝트의 커스텀 User manager.
-
-    Django 기본 UserManager는 이메일 도메인 부분만 소문자로 정규화한다.
-    이 프로젝트에서는 이메일 전체를 소문자로 통일하고 이메일 입력을 필수로 한다.
-    """
+    """Custom user manager used by the project."""
 
     use_in_migrations = True
 
@@ -48,12 +43,7 @@ class UserManager(DjangoUserManager):
 
 
 class User(AbstractUser):
-    """
-    Django 기본 User를 확장한 프로젝트 사용자 모델.
-
-    로그인 식별자는 기존처럼 username을 사용하고,
-    email은 모든 회원 유형에서 필수이며 DB 수준에서 중복을 금지한다.
-    """
+    """Project user model with normalized email uniqueness."""
 
     email = models.EmailField(
         unique=True,
@@ -62,7 +52,6 @@ class User(AbstractUser):
 
     objects = UserManager()
 
-    # createsuperuser 실행 시 username/password 외에 email도 입력받는다.
     REQUIRED_FIELDS = ["email"]
 
     class Meta:
@@ -75,7 +64,6 @@ class User(AbstractUser):
         self.email = User.objects.normalize_email(self.email)
 
     def save(self, *args, **kwargs):
-        # admin, shell 등 serializer를 거치지 않는 저장도 동일하게 정규화한다.
         self.email = User.objects.normalize_email(self.email)
         super().save(*args, **kwargs)
 
@@ -145,52 +133,43 @@ class UserProfile(TimeStampedModel):
         verbose_name="성별",
     )
 
-    following = models.ManyToManyField(
-        "self",
-        through="Follow",
-        through_fields=("follower", "following"),
-        symmetrical=False,
-        related_name="followers",
-        blank=True,
-        verbose_name="팔로잉",
-    )
-
-    # 지역은 선택 사항이며 최대 3개까지 UserRegion을 통해 등록한다.
-    regions = models.ManyToManyField(
-        Region,
-        through="UserRegion",
-        related_name="user_profiles",
-        blank=True,
-        verbose_name="선택 지역",
-    )
-
     class Meta:
         db_table = "user_profiles"
         verbose_name = "사용자 프로필"
         verbose_name_plural = "사용자 프로필"
+
+    @property
+    def regions(self):
+        """Compatibility accessor for selected regions."""
+
+        if not getattr(self, "user_id", None):
+            return UserRegion.objects.none()
+
+        return self.user.selected_regions
 
     def __str__(self):
         return f"{self.user.username} - {self.nickname}"
 
 
 class UserRegion(TimeStampedModel):
-    """사용자가 선택한 지역과 우선순위를 저장하는 중간 모델."""
+    """Stores a user's selected region and its priority."""
 
-    user_profile = models.ForeignKey(
-        UserProfile,
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="user_regions",
-        verbose_name="사용자 프로필",
+        related_name="selected_regions",
+        verbose_name="사용자",
     )
 
     region = models.ForeignKey(
         Region,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="user_regions",
         verbose_name="지역",
     )
 
-    priority = models.PositiveSmallIntegerField(
+    priority = models.PositiveIntegerField(
+        default=1,
         verbose_name="지역 우선순위",
     )
 
@@ -201,12 +180,12 @@ class UserRegion(TimeStampedModel):
         ordering = ["priority"]
         constraints = [
             models.UniqueConstraint(
-                fields=["user_profile", "region"],
-                name="unique_user_profile_region",
+                fields=["user", "region"],
+                name="unique_user_region",
             ),
             models.UniqueConstraint(
-                fields=["user_profile", "priority"],
-                name="unique_user_profile_region_priority",
+                fields=["user", "priority"],
+                name="unique_user_region_priority",
             ),
             models.CheckConstraint(
                 condition=(
@@ -218,31 +197,32 @@ class UserRegion(TimeStampedModel):
         ]
 
     def __str__(self):
-        return (
-            f"{self.user_profile.nickname} - "
-            f"{self.region} ({self.priority})"
-        )
+        return f"{self.user.username} - {self.region} ({self.priority})"
 
 
 class Follow(TimeStampedModel):
     follower = models.ForeignKey(
-        UserProfile,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="following_relations",
-        verbose_name="팔로우를 건 사용자",
+        related_name="following",
+        verbose_name="팔로우한 사용자",
     )
 
     following = models.ForeignKey(
-        UserProfile,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="follower_relations",
-        verbose_name="팔로우 당한 사용자",
+        related_name="followers",
+        verbose_name="팔로워 대상 사용자",
     )
 
     class Meta:
         db_table = "follows"
         verbose_name = "팔로우"
         verbose_name_plural = "팔로우"
+        indexes = [
+            models.Index(fields=["follower"], name="follow_follower_idx"),
+            models.Index(fields=["following"], name="follow_following_idx"),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["follower", "following"],
@@ -254,12 +234,21 @@ class Follow(TimeStampedModel):
             ),
         ]
 
+    @staticmethod
+    def _display_name(user):
+        profile = getattr(user, "profile", None)
+        nickname = getattr(profile, "nickname", None)
+        return nickname or getattr(user, "username", str(user))
+
     def __str__(self):
-        return f"{self.follower.nickname} → {self.following.nickname}"
+        return (
+            f"{self._display_name(self.follower)} -> "
+            f"{self._display_name(self.following)}"
+        )
 
 
 class BusinessProfile(TimeStampedModel):
-    """사업자 회원에게만 생성되는 추가 프로필."""
+    """Additional profile information for business accounts."""
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -268,7 +257,6 @@ class BusinessProfile(TimeStampedModel):
         verbose_name="사용자",
     )
 
-    # 계정 이메일(User.email)과 별개인 사업장 공개 연락용 이메일이다.
     business_contact_email = models.EmailField(
         blank=True,
         default="",
@@ -288,7 +276,7 @@ class BusinessProfile(TimeStampedModel):
 
     business_phone = models.CharField(
         max_length=20,
-        verbose_name="사업장 전화번호",
+        verbose_name="사업자 전화번호",
     )
 
     owner_name = models.CharField(
@@ -338,7 +326,7 @@ class TermsAgreement(TimeStampedModel):
     service_terms_version = models.CharField(
         max_length=20,
         default="v1.0",
-        verbose_name="서비스 이용약관 버전",
+        verbose_name="서비스 약관 버전",
     )
 
     privacy_terms_version = models.CharField(

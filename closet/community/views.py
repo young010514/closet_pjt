@@ -93,7 +93,11 @@ class PostDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Post.objects.get(pk=pk)
+            return (
+                Post.objects.select_related('author', 'author__profile')
+                .prefetch_related('images')
+                .get(pk=pk)
+            )
         except Post.DoesNotExist:
             return None
 
@@ -103,7 +107,7 @@ class PostDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         post.view_count += 1
         post.save(update_fields=['view_count'])
-        serializer = PostSerializer(post, context={'request': request})
+        serializer = PostDetailSerializer(post, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk):

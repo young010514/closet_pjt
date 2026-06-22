@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+from accounts.serializers import PublicUserSerializer
+
 from .models import Post, PostImage, PostVideo, ExperienceApplication, Comment
 
 

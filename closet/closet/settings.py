@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'accounts',
     'common',
     'community',
+    "stores",
+    
     "rest_framework",
 
 ]
