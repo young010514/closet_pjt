@@ -16,6 +16,21 @@ urlpatterns = [
     path("mypage/", views.mypage, name="mypage"),
     path("me/regions/", views.MyRegionView.as_view(), name="my_regions"),
     path(
+        "users/<int:user_id>/follow/",
+        views.toggle_follow,
+        name="user_follow_toggle",
+    ),
+    path(
+        "users/<int:user_id>/followers/",
+        views.user_followers,
+        name="user_followers",
+    ),
+    path(
+        "users/<int:user_id>/following/",
+        views.user_following,
+        name="user_following",
+    ),
+    path(
         "regions/reorder/",
         views.reorder_user_regions,
         name="reorder_user_regions",

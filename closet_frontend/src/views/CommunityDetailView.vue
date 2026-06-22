@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import FollowButton from '@/components/FollowButton.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
 
@@ -32,6 +33,13 @@ const EXPERIENCE_STATUS_CLASS = {
 }
 
 const post = computed(() => store.currentPost)
+const authorProfile = computed(() => post.value?.author_profile ?? null)
+const authorDisplayName = computed(
+  () => authorProfile.value?.nickname ?? post.value?.author_name ?? '익명',
+)
+const isAuthorSelf = computed(
+  () => Boolean(authorProfile.value && authStore.user?.id === authorProfile.value.id),
+)
 const isRecruit = computed(() => post.value?.board === 'experience' && post.value?.category === 'recruit')
 const isReview = computed(() => post.value?.board === 'experience' && post.value?.category === 'review')
 
@@ -100,9 +108,18 @@ async function handleDelete() {
       </div>
 
       <div class="meta">
-        <span>{{ post.author_name }}</span>
-        <span>조회 {{ post.view_count }}</span>
-        <span>{{ new Date(post.created_at).toLocaleDateString() }}</span>
+        <div class="author-meta">
+          <span class="author-name">{{ authorDisplayName }}</span>
+          <span v-if="authorProfile" class="author-username">@{{ authorProfile.username }}</span>
+        </div>
+
+        <FollowButton
+          v-if="authorProfile"
+          :target-user-id="authorProfile.id"
+          :initial-is-following="authorProfile.is_following"
+          :initial-follower-count="authorProfile.follower_count"
+          :is-me="isAuthorSelf"
+        />
       </div>
 
       <!-- 이미지 갤러리 -->
@@ -161,7 +178,29 @@ h1 { font-size: 1.4rem; margin-bottom: 0.75rem; }
 .info-row { display: flex; gap: 1rem; font-size: 0.88rem; }
 .info-label { color: #888; min-width: 90px; flex-shrink: 0; }
 
-.meta { display: flex; gap: 1rem; font-size: 0.8rem; color: #888; margin-bottom: 1rem; }
+.meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 1rem;
+}
+.author-meta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.author-name {
+  color: #222;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.author-username {
+  color: #8a8a8a;
+  font-size: 0.78rem;
+}
 
 .image-gallery {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

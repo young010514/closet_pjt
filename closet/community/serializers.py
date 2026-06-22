@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+from accounts.serializers import PublicUserSerializer
+
 from .models import Post, PostImage
 
 
@@ -69,3 +72,11 @@ class PostSerializer(serializers.ModelSerializer):
             'author', 'author_name', 'experience_status', 'images',
             'view_count', 'like_count', 'created_at', 'updated_at',
         ]
+
+
+class PostDetailSerializer(PostSerializer):
+    author_profile = PublicUserSerializer(source='author', read_only=True)
+
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ['author_profile']
+        read_only_fields = PostSerializer.Meta.read_only_fields + ['author_profile']

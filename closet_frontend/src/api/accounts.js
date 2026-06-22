@@ -53,6 +53,22 @@ export async function reorderRegions(regionIds) {
   return updateMyRegions(regionIds)
 }
 
+export async function toggleFollow(userId) {
+  await initializeCsrf()
+  const response = await api.post(`${ACCOUNT_BASE}/users/${userId}/follow/`)
+  return response.data
+}
+
+export async function getFollowers(userId) {
+  const response = await api.get(`${ACCOUNT_BASE}/users/${userId}/followers/`)
+  return response.data
+}
+
+export async function getFollowing(userId) {
+  const response = await api.get(`${ACCOUNT_BASE}/users/${userId}/following/`)
+  return response.data
+}
+
 export function normalizeApiError(error) {
   const status = error?.response?.status ?? null
   const data = error?.response?.data

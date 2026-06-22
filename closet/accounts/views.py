@@ -1,7 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.db import IntegrityError
+from django.db import transaction
+from django.db.models import Count
 from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -14,9 +18,14 @@ from .serializers import (
     CurrentUserSerializer,
     LoginSerializer,
     NormalSignupSerializer,
+    PublicUserSerializer,
     SelectedRegionSerializer,
     UserRegionReorderSerializer,
 )
+from .models import Follow
+
+
+User = get_user_model()
 
 
 SIGNUP_CONFLICT_RESPONSE = {
@@ -211,5 +220,89 @@ def reorder_user_regions(request):
                 many=True,
             ).data,
         },
+        status=status.HTTP_200_OK,
+    )
+
+
+def build_public_user_queryset(queryset):
+    return queryset.select_related("profile").annotate(
+        follower_count=Count("followers", distinct=True),
+        following_count=Count("following", distinct=True),
+    )
+
+
+def serialize_public_users(request, queryset):
+    serializer = PublicUserSerializer(
+        queryset,
+        many=True,
+        context={"request": request},
+    )
+    return serializer.data
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def toggle_follow(request, user_id):
+    target_user = get_object_or_404(
+        User.objects.select_related("profile"),
+        pk=user_id,
+    )
+
+    if target_user.pk == request.user.pk:
+        return Response(
+            {"detail": "자기 자신은 팔로우할 수 없습니다."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    with transaction.atomic():
+        follow, created = Follow.objects.get_or_create(
+            follower=request.user,
+            following=target_user,
+        )
+
+        if created:
+            is_following = True
+        else:
+            follow.delete()
+            is_following = False
+
+    return Response(
+        {
+            "is_following": is_following,
+            "follower_count": target_user.followers.count(),
+            "following_count": target_user.following.count(),
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def user_followers(request, user_id):
+    target_user = get_object_or_404(
+        User.objects.select_related("profile"),
+        pk=user_id,
+    )
+    queryset = build_public_user_queryset(
+        User.objects.filter(following__following=target_user).order_by("username")
+    )
+    return Response(
+        serialize_public_users(request, queryset),
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def user_following(request, user_id):
+    target_user = get_object_or_404(
+        User.objects.select_related("profile"),
+        pk=user_id,
+    )
+    queryset = build_public_user_queryset(
+        User.objects.filter(followers__follower=target_user).order_by("username")
+    )
+    return Response(
+        serialize_public_users(request, queryset),
         status=status.HTTP_200_OK,
     )

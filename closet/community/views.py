@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import Post, PostImage
-from .serializers import PostSerializer
+from .serializers import PostDetailSerializer, PostSerializer
 
 ORDERING_MAP = {
     'popular': '-like_count',
@@ -80,7 +80,11 @@ class PostDetailView(APIView):
 
     def get_object(self, pk):
         try:
-            return Post.objects.get(pk=pk)
+            return (
+                Post.objects.select_related('author', 'author__profile')
+                .prefetch_related('images')
+                .get(pk=pk)
+            )
         except Post.DoesNotExist:
             return None
 
@@ -90,7 +94,7 @@ class PostDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         post.view_count += 1
         post.save(update_fields=['view_count'])
-        serializer = PostSerializer(post, context={'request': request})
+        serializer = PostDetailSerializer(post, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk):

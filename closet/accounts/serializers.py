@@ -535,54 +535,74 @@ class LoginSerializer(serializers.Serializer):
         return {"user": user}
 
 
-class UserProfileSummarySerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(read_only=True)
-    username = serializers.CharField(
-        source="user.username",
-        read_only=True,
-    )
+def get_following_ids_from_context(serializer):
+    following_ids = serializer.context.get("_following_ids")
+    if following_ids is not None:
+        return following_ids
+
+    request = serializer.context.get("request")
+    if request is None or not request.user.is_authenticated:
+        following_ids = set()
+    else:
+        following_ids = set(
+            Follow.objects.filter(follower=request.user).values_list(
+                "following_id",
+                flat=True,
+            )
+        )
+
+    serializer.context["_following_ids"] = following_ids
+    return following_ids
+
+
+class PublicUserSerializer(serializers.ModelSerializer):
+    nickname = serializers.SerializerMethodField()
+    profile_image = serializers.SerializerMethodField()
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
 
     class Meta:
-        model = UserProfile
-        fields = ("id", "user_id", "username", "nickname", "user_type")
+        model = User
+        fields = (
+            "id",
+            "username",
+            "nickname",
+            "profile_image",
+            "follower_count",
+            "following_count",
+            "is_following",
+        )
         read_only_fields = fields
 
+    def get_nickname(self, user):
+        try:
+            return user.profile.nickname
+        except UserProfile.DoesNotExist:
+            return user.username
 
-class FollowSerializer(serializers.ModelSerializer):
-    follower = UserProfileSummarySerializer(read_only=True)
+    def get_profile_image(self, user):
+        return None
 
-    following_profile_id = serializers.PrimaryKeyRelatedField(
-        source="following",
-        queryset=UserProfile.objects.select_related("user").all(),
-        write_only=True,
-    )
+    def get_follower_count(self, user):
+        annotated_count = getattr(user, "follower_count", None)
+        if annotated_count is not None:
+            return annotated_count
+        return user.followers.count()
 
-    following = UserProfileSummarySerializer(read_only=True)
+    def get_following_count(self, user):
+        annotated_count = getattr(user, "following_count", None)
+        if annotated_count is not None:
+            return annotated_count
+        return user.following.count()
 
-    class Meta:
-        model = Follow
-        fields = ("id", "follower", "following_profile_id", "following")
-        validators = []
+    def get_is_following(self, user):
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
 
-    def validate_following_profile_id(self, following_profile):
-        follower_profile = get_request_profile(self)
-
-        if follower_profile.pk == following_profile.pk:
-            raise serializers.ValidationError("자기 자신은 팔로우할 수 없습니다.")
-
-        if Follow.objects.filter(
-            follower=follower_profile,
-            following=following_profile,
-        ).exists():
-            raise serializers.ValidationError("이미 팔로우 중인 사용자입니다.")
-
-        return following_profile
-
-    def create(self, validated_data):
-        return Follow.objects.create(
-            follower=get_request_profile(self),
-            **validated_data,
-        )
+        following_ids = get_following_ids_from_context(self)
+        return user.id in following_ids
 
 
 class BusinessProfileDetailSerializer(serializers.ModelSerializer):
@@ -601,6 +621,9 @@ class BusinessProfileDetailSerializer(serializers.ModelSerializer):
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):
     regions = serializers.SerializerMethodField()
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
@@ -613,12 +636,35 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
             "birth_date",
             "gender",
             "regions",
+            "follower_count",
+            "following_count",
+            "is_following",
         )
         read_only_fields = fields
 
     def get_regions(self, profile):
         queryset = profile.regions.select_related("region").order_by("priority")
         return UserRegionSerializer(queryset, many=True, context=self.context).data
+
+    def get_follower_count(self, profile):
+        annotated_count = getattr(profile.user, "follower_count", None)
+        if annotated_count is not None:
+            return annotated_count
+        return profile.user.followers.count()
+
+    def get_following_count(self, profile):
+        annotated_count = getattr(profile.user, "following_count", None)
+        if annotated_count is not None:
+            return annotated_count
+        return profile.user.following.count()
+
+    def get_is_following(self, profile):
+        request = self.context.get("request")
+        if request is None or not request.user.is_authenticated:
+            return False
+
+        following_ids = get_following_ids_from_context(self)
+        return profile.user_id in following_ids
 
 
 class CurrentUserSerializer(serializers.ModelSerializer):

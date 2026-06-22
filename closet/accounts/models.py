@@ -133,16 +133,6 @@ class UserProfile(TimeStampedModel):
         verbose_name="성별",
     )
 
-    following = models.ManyToManyField(
-        "self",
-        through="Follow",
-        through_fields=("follower", "following"),
-        symmetrical=False,
-        related_name="followers",
-        blank=True,
-        verbose_name="팔로우",
-    )
-
     class Meta:
         db_table = "user_profiles"
         verbose_name = "사용자 프로필"
@@ -212,16 +202,16 @@ class UserRegion(TimeStampedModel):
 
 class Follow(TimeStampedModel):
     follower = models.ForeignKey(
-        UserProfile,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="following_relations",
+        related_name="following",
         verbose_name="팔로우한 사용자",
     )
 
     following = models.ForeignKey(
-        UserProfile,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="follower_relations",
+        related_name="followers",
         verbose_name="팔로워 대상 사용자",
     )
 
@@ -229,6 +219,10 @@ class Follow(TimeStampedModel):
         db_table = "follows"
         verbose_name = "팔로우"
         verbose_name_plural = "팔로우"
+        indexes = [
+            models.Index(fields=["follower"], name="follow_follower_idx"),
+            models.Index(fields=["following"], name="follow_following_idx"),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["follower", "following"],
@@ -240,8 +234,17 @@ class Follow(TimeStampedModel):
             ),
         ]
 
+    @staticmethod
+    def _display_name(user):
+        profile = getattr(user, "profile", None)
+        nickname = getattr(profile, "nickname", None)
+        return nickname or getattr(user, "username", str(user))
+
     def __str__(self):
-        return f"{self.follower.nickname} -> {self.following.nickname}"
+        return (
+            f"{self._display_name(self.follower)} -> "
+            f"{self._display_name(self.following)}"
+        )
 
 
 class BusinessProfile(TimeStampedModel):
