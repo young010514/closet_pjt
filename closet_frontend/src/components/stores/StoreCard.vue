@@ -43,8 +43,7 @@ const viewCount = computed(() =>
 
     <div class="store-card__footer">
       <span v-if="phone">전화 {{ phone }}</span>
-      <span>카카오맵 연동 준비중</span>
+      <span>지도로 위치를 확인해 보세요</span>
     </div>
   </article>
 </template>
-

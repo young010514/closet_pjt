@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+  envDir: fileURLToPath(new URL('..', import.meta.url)),
   plugins: [vue()],
 
   resolve: {
