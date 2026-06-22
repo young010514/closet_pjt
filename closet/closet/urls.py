@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-from django.contrib import admin
-from django.urls import include, path
-
-=======
 """
 URL configuration for closet project.
 
@@ -23,18 +18,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
->>>>>>> 237d073ad7f444fbd928a85215bc8eb9e94c9c6b
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/accounts/", include("accounts.urls")),
-<<<<<<< HEAD
     path("api/community/", include("community.urls")),
     path("api/regions/", include("regions.urls")),
     path("api/stores/", include("stores.urls")),
-]
-=======
     path('api/community/', include("community.urls")),
     path('regions/', include("regions.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
->>>>>>> 237d073ad7f444fbd928a85215bc8eb9e94c9c6b
