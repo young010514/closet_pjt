@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
@@ -7,8 +7,10 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+
 const logoutError = ref('')
 const isLoggingOut = ref(false)
+const searchInput = ref('')
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
@@ -30,6 +32,23 @@ const isStoreNavActive = computed(
   () => route.name === 'community' && normalizedBoard.value === 'local_shop',
 )
 
+function normalizeSearchTerm(value) {
+  const raw = Array.isArray(value) ? value[0] : value
+  return typeof raw === 'string' ? raw.trim() : ''
+}
+
+function submitHeaderSearch() {
+  const term = searchInput.value.trim()
+  if (!term) {
+    return
+  }
+
+  router.push({
+    name: 'user-search',
+    query: { q: term },
+  })
+}
+
 async function logout() {
   logoutError.value = ''
   isLoggingOut.value = true
@@ -43,6 +62,14 @@ async function logout() {
     router.push('/login')
   }
 }
+
+watch(
+  () => route.query.q,
+  (value) => {
+    searchInput.value = normalizeSearchTerm(value)
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -50,14 +77,9 @@ async function logout() {
     <header class="topbar">
       <RouterLink class="brand-link" to="/">Closet</RouterLink>
 
+
       <nav class="topnav" aria-label="주요 메뉴">
-        <RouterLink
-          class="topnav-link"
-          :class="{ 'topnav-link--active': isStoreNavActive }"
-          :to="{ name: 'community', query: { board: 'local_shop' } }"
-        >
-          옷가게 목록
-        </RouterLink>
+
         <template v-if="isAuthenticated">
           <RouterLink
             class="topnav-link"
@@ -66,16 +88,36 @@ async function logout() {
           >
             커뮤니티
           </RouterLink>
-          <RouterLink to="/mypage">마이페이지</RouterLink>
+          <RouterLink class="topnav-link" to="/mypage">마이페이지</RouterLink>
           <button type="button" class="nav-button" :disabled="isLoggingOut" @click="logout">
             {{ isLoggingOut ? '로그아웃 중' : '로그아웃' }}
           </button>
         </template>
         <template v-else>
-          <RouterLink to="/login">로그인</RouterLink>
-          <RouterLink to="/signup">회원가입</RouterLink>
+          <RouterLink class="topnav-link" to="/login">로그인</RouterLink>
+          <RouterLink class="topnav-link" to="/signup">회원가입</RouterLink>
         </template>
       </nav>
+
+      
+      <form class="topbar-search" @submit.prevent="submitHeaderSearch">
+        <label class="sr-only" for="topbar-user-search">유저 검색</label>
+        <input
+          id="topbar-user-search"
+          v-model="searchInput"
+          type="search"
+          placeholder="유저 검색"
+          autocomplete="off"
+          aria-label="유저 검색어 입력"
+        />
+        <button
+          type="submit"
+          class="button button--secondary topbar-search__button"
+          aria-label="유저 검색 실행"
+        >
+          검색
+        </button>
+      </form>
     </header>
 
     <p v-if="logoutError" class="shell-error" role="alert">{{ logoutError }}</p>

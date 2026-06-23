@@ -3,15 +3,24 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.db import IntegrityError
 from django.db import transaction
+from django.db.models import Case
 from django.db.models import Count
+from django.db.models import IntegerField
+from django.db.models import Q
+from django.db.models import Value
+from django.db.models import When
+from django.db.models.functions import Lower
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_protect
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from common.pagination import StandardPageNumberPagination
 
 from .serializers import (
     BusinessSignupSerializer,
@@ -26,6 +35,7 @@ from .models import Follow
 
 
 User = get_user_model()
+MAX_PUBLIC_USER_SEARCH_LENGTH = 100
 
 
 SIGNUP_CONFLICT_RESPONSE = {
@@ -231,6 +241,44 @@ def build_public_user_queryset(queryset):
     )
 
 
+def build_public_user_search_queryset(queryset, search_term):
+    if not search_term:
+        return queryset.none()
+
+    if len(search_term) > MAX_PUBLIC_USER_SEARCH_LENGTH:
+        raise ValidationError(
+            {"q": "검색어는 100자 이내로 입력해 주세요."}
+        )
+
+    search_filter = Q(username__icontains=search_term) | Q(
+        profile__nickname__icontains=search_term
+    )
+    exact_filter = Q(username__iexact=search_term) | Q(
+        profile__nickname__iexact=search_term
+    )
+    prefix_filter = Q(username__istartswith=search_term) | Q(
+        profile__nickname__istartswith=search_term
+    )
+
+    queryset = build_public_user_queryset(
+        queryset.filter(
+            is_active=True,
+            profile__isnull=False,
+        ).filter(search_filter)
+    ).distinct()
+
+    return queryset.annotate(
+        search_rank=Case(
+            When(exact_filter, then=Value(0)),
+            When(prefix_filter, then=Value(1)),
+            default=Value(2),
+            output_field=IntegerField(),
+        ),
+        nickname_sort=Lower("profile__nickname"),
+        username_sort=Lower("username"),
+    ).order_by("search_rank", "nickname_sort", "username_sort", "id")
+
+
 def serialize_public_users(request, queryset):
     serializer = PublicUserSerializer(
         queryset,
@@ -246,6 +294,23 @@ def serialize_public_user(request, user):
         context={"request": request},
     )
     return serializer.data
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def user_search(request):
+    search_term = (request.query_params.get("q") or "").strip()
+    paginator = StandardPageNumberPagination()
+
+    if search_term:
+        queryset = build_public_user_search_queryset(User.objects.all(), search_term)
+    else:
+        queryset = User.objects.none()
+
+    page = paginator.paginate_queryset(queryset, request, view=None)
+    return paginator.get_paginated_response(
+        serialize_public_users(request, page),
+    )
 
 
 @api_view(["GET"])

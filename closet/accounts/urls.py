@@ -14,6 +14,7 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("mypage/", views.mypage, name="mypage"),
+    path("users/search/", views.user_search, name="user_search"),
     path("users/<int:user_id>/", views.user_profile, name="user_profile"),
     path("me/regions/", views.MyRegionView.as_view(), name="my_regions"),
     path(

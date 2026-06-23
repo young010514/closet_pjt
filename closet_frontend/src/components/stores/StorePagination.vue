@@ -14,6 +14,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  ariaLabel: {
+    type: String,
+    default: '옷가게 목록 페이지 이동',
+  },
 })
 
 const emit = defineEmits(['change'])
@@ -64,7 +68,7 @@ function goTo(page) {
 </script>
 
 <template>
-  <nav v-if="pageCount > 1" class="store-pagination" aria-label="옷가게 목록 페이지 이동">
+  <nav v-if="pageCount > 1" class="store-pagination" :aria-label="ariaLabel">
     <button
       type="button"
       class="mini-button"
@@ -99,4 +103,3 @@ function goTo(page) {
     </button>
   </nav>
 </template>
-
