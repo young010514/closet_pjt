@@ -7,6 +7,7 @@ import CommunityListView from '@/views/CommunityListView.vue'
 import LoginView from '@/views/LoginView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
+import UserSearchView from '@/views/UserSearchView.vue'
 import UserProfileView from '@/views/UserProfileView.vue'
 import SignupSelectView from '@/views/SignupSelectView.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -58,6 +59,11 @@ const router = createRouter({
       name: 'mypage',
       component: MyPageView,
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/users/search',
+      name: 'user-search',
+      component: UserSearchView,
     },
     {
       path: '/users/:userId',

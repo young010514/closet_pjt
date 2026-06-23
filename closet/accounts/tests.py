@@ -1,5 +1,5 @@
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory, force_authenticate
+from rest_framework.test import APIClient, APIRequestFactory, force_authenticate
 
 from regions.models import Region
 
@@ -9,6 +9,7 @@ from .views import (
     MyRegionView,
     mypage,
     toggle_follow,
+    user_search,
     user_followers,
     user_following,
     user_profile,
@@ -380,3 +381,122 @@ class PublicUserProfileViewTests(TestCase):
         response = user_profile(request, 9999)
 
         self.assertEqual(response.status_code, 404)
+
+
+class PublicUserSearchViewTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.alice = create_user_with_profile(
+            "alice",
+            "alice@example.com",
+            "앨리스",
+            "01011110000",
+        )
+        self.bob = create_user_with_profile(
+            "bob",
+            "bob@example.com",
+            "보브",
+            "01011110001",
+        )
+        self.charlie = create_user_with_profile(
+            "charlie",
+            "charlie@example.com",
+            "찰리",
+            "01011110002",
+        )
+        self.dave = create_user_with_profile(
+            "dave",
+            "dave@example.com",
+            "대프",
+            "01011110003",
+            user_type=UserProfile.USER_TYPE_BUSINESS,
+        )
+        self.inactive_user = create_user_with_profile(
+            "inactive",
+            "inactive@example.com",
+            "비활성",
+            "01011110004",
+        )
+        self.inactive_user.is_active = False
+        self.inactive_user.save(update_fields=["is_active"])
+        self.admin_like_user = User.objects.create_user(
+            username="adminhelper",
+            email="adminhelper@example.com",
+            password="StrongPass123!",
+        )
+        Follow.objects.create(follower=self.alice, following=self.bob)
+        Follow.objects.create(follower=self.bob, following=self.charlie)
+
+    def search(self, params=None, user=None):
+        request = self.factory.get("/api/accounts/users/search/", params or {})
+        if user is not None:
+            force_authenticate(request, user=user)
+        return user_search(request)
+
+    def test_username_partial_search_matches_users(self):
+        response = self.search({"q": "ali"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["username"] for item in response.data["results"]], ["alice"])
+
+    def test_nickname_partial_search_matches_users(self):
+        response = self.search({"q": "보"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["username"] for item in response.data["results"]], ["bob"])
+
+    def test_search_is_case_insensitive_and_trims_whitespace(self):
+        response = self.search({"q": "  ALICE  "})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["username"] for item in response.data["results"]], ["alice"])
+
+    def test_non_matching_search_returns_empty_results(self):
+        response = self.search({"q": "zzz"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 0)
+        self.assertEqual(response.data["results"], [])
+
+    def test_blank_search_does_not_return_all_users(self):
+        response = self.search({"q": "   "})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 0)
+        self.assertEqual(response.data["results"], [])
+
+    def test_inactive_users_are_excluded(self):
+        response = self.search({"q": "inactive"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("inactive", [item["username"] for item in response.data["results"]])
+
+    def test_profileless_users_are_excluded(self):
+        response = self.search({"q": "admin"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("adminhelper", [item["username"] for item in response.data["results"]])
+
+    def test_search_response_excludes_private_fields(self):
+        response = self.search({"q": "a"})
+
+        self.assertEqual(response.status_code, 200)
+        result = response.data["results"][0]
+        self.assertNotIn("email", result)
+        self.assertNotIn("phone", result)
+        self.assertNotIn("real_name", result)
+
+    def test_anonymous_user_can_search(self):
+        response = self.search({"q": "bo"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["results"][0]["username"], "bob")
+        self.assertFalse(response.data["results"][0]["is_following"])
+
+    def test_authenticated_user_follow_state_is_reflected(self):
+        response = self.search({"q": "bob"}, user=self.alice)
+
+        self.assertEqual(response.status_code, 200)
+        result = response.data["results"][0]
+        self.assertEqual(result["username"], "bob")
+        self.assertTrue(result["is_following"])

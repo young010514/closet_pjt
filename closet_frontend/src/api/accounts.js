@@ -41,6 +41,13 @@ export async function getUserProfile(userId) {
   return response.data
 }
 
+export async function searchUsers(params) {
+  const response = await api.get(`${ACCOUNT_BASE}/users/search/`, {
+    params,
+  })
+  return response.data
+}
+
 export async function getMyRegions() {
   const response = await api.get(`${ACCOUNT_BASE}/me/regions/`)
   return response.data
