@@ -55,7 +55,7 @@
   font-weight: 700;
 }
 
-.topnav a.router-link-active {
+.topnav a.topnav-link--active {
   color: var(--color-accent-dark);
   background: var(--color-accent-soft);
 }
@@ -280,6 +280,7 @@ input[type='checkbox'] {
 
 .store-view {
   width: min(100%, 1280px);
+  margin: 0 auto;
 }
 
 .store-panel {

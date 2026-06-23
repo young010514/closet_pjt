@@ -18,11 +18,11 @@ const DEFAULT_CENTER = {
 const DEFAULT_MAP_LEVEL = 5
 const MAP_IDLE_DEBOUNCE_MS = 400
 
-let kakaoMapsLoaderPromise = null
 let mapIdleTimer = null
 let skipNextMapIdleRefresh = false
 let mapIdleHandler = null
 let storeRequestSeq = 0
+const isUnmounted = ref(false)
 
 const defaultFilters = {
   search: '',
@@ -229,15 +229,27 @@ function captureMapBounds() {
 }
 
 function scheduleStoreReloadFromBounds() {
+  if (isUnmounted.value) {
+    return
+  }
+
   clearMapIdleTimer()
 
   mapIdleTimer = window.setTimeout(() => {
+    if (isUnmounted.value) {
+      return
+    }
+
     mapIdleTimer = null
     void loadStores(1)
   }, MAP_IDLE_DEBOUNCE_MS)
 }
 
 function handleMapIdle() {
+  if (isUnmounted.value) {
+    return
+  }
+
   captureMapBounds()
 
   if (skipNextMapIdleRefresh) {
@@ -251,6 +263,10 @@ function handleMapIdle() {
 }
 
 function focusMapOnStore(store) {
+  if (isUnmounted.value) {
+    return
+  }
+
   if (!map.value || !window.kakao?.maps) {
     return
   }
@@ -287,13 +303,23 @@ async function loadSidos() {
 
   try {
     const data = await getSidos()
+    if (isUnmounted.value) {
+      return
+    }
+
     regionOptions.sidos = Array.isArray(data.sidos) ? data.sidos : []
   } catch (error) {
+    if (isUnmounted.value) {
+      return
+    }
+
     const normalized = normalizeApiError(error)
     regionOptions.sidos = []
     regionError.value = `${normalized.message} 시도 목록을 불러오지 못했습니다.`
   } finally {
-    isLoadingSidos.value = false
+    if (!isUnmounted.value) {
+      isLoadingSidos.value = false
+    }
   }
 }
 
@@ -308,14 +334,24 @@ async function loadSigungus() {
 
   try {
     const data = await getSigungus(filters.sido)
+    if (isUnmounted.value) {
+      return
+    }
+
     regionOptions.sigungus = Array.isArray(data.sigungus) ? data.sigungus : []
     regionError.value = ''
   } catch (error) {
+    if (isUnmounted.value) {
+      return
+    }
+
     const normalized = normalizeApiError(error)
     regionOptions.sigungus = []
     regionError.value = `${normalized.message} 시군구 목록을 불러오지 못했습니다.`
   } finally {
-    isLoadingSigungus.value = false
+    if (!isUnmounted.value) {
+      isLoadingSigungus.value = false
+    }
   }
 }
 
@@ -330,14 +366,24 @@ async function loadDongs() {
 
   try {
     const data = await getDongs(filters.sido, filters.sigungu)
+    if (isUnmounted.value) {
+      return
+    }
+
     regionOptions.dongs = Array.isArray(data.regions) ? data.regions : []
     regionError.value = ''
   } catch (error) {
+    if (isUnmounted.value) {
+      return
+    }
+
     const normalized = normalizeApiError(error)
     regionOptions.dongs = []
     regionError.value = `${normalized.message} 동 목록을 불러오지 못했습니다.`
   } finally {
-    isLoadingDongs.value = false
+    if (!isUnmounted.value) {
+      isLoadingDongs.value = false
+    }
   }
 }
 
@@ -376,6 +422,10 @@ function buildQueryParams(page = 1) {
 }
 
 async function loadStores(page = 1) {
+  if (isUnmounted.value) {
+    return
+  }
+
   const requestId = ++storeRequestSeq
   isLoadingStores.value = true
   storeError.value = ''
@@ -385,6 +435,10 @@ async function loadStores(page = 1) {
     const data = await getStores(buildQueryParams(page))
 
     if (requestId !== storeRequestSeq) {
+      return
+    }
+
+    if (isUnmounted.value) {
       return
     }
 
@@ -406,6 +460,10 @@ async function loadStores(page = 1) {
       return
     }
 
+    if (isUnmounted.value) {
+      return
+    }
+
     const normalized = normalizeApiError(error)
     stores.value = []
     totalCount.value = 0
@@ -414,7 +472,7 @@ async function loadStores(page = 1) {
     clearMapMarkers()
     storeError.value = normalized.message
   } finally {
-    if (requestId === storeRequestSeq) {
+    if (requestId === storeRequestSeq && !isUnmounted.value) {
       isLoadingStores.value = false
     }
   }
@@ -494,6 +552,10 @@ async function geocodeAddress(kakao, address) {
 }
 
 async function resolveInitialCenter(kakao) {
+  if (isUnmounted.value) {
+    return DEFAULT_CENTER
+  }
+
   if (!authStore.isInitialized) {
     try {
       await authStore.initializeAuth()
@@ -502,12 +564,20 @@ async function resolveInitialCenter(kakao) {
     }
   }
 
+  if (isUnmounted.value) {
+    return DEFAULT_CENTER
+  }
+
   if (!authStore.isAuthenticated) {
     return DEFAULT_CENTER
   }
 
   try {
     const data = await getMyRegions()
+    if (isUnmounted.value) {
+      return DEFAULT_CENTER
+    }
+
     const regions = Array.isArray(data.regions) ? data.regions : []
 
     if (!regions.length) {
@@ -545,8 +615,16 @@ async function resolveInitialCenter(kakao) {
 }
 
 function loadKakaoMapsSdk() {
-  if (kakaoMapsLoaderPromise) {
-    return kakaoMapsLoaderPromise
+  if (
+    window.kakao?.maps?.Map &&
+    window.kakao?.maps?.LatLng &&
+    window.kakao?.maps?.services?.Geocoder
+  ) {
+    return Promise.resolve(window.kakao)
+  }
+
+  if (window.__closetKakaoMapsLoaderPromise) {
+    return window.__closetKakaoMapsLoaderPromise
   }
 
   const appKey = import.meta.env.VITE_KAKAO_MAP_APP_KEY
@@ -557,7 +635,9 @@ function loadKakaoMapsSdk() {
     )
   }
 
-  kakaoMapsLoaderPromise = new Promise((resolve, reject) => {
+  const existingScript = document.querySelector('script[data-kakao-maps-sdk="true"]')
+
+  window.__closetKakaoMapsLoaderPromise = new Promise((resolve, reject) => {
     const finish = () => {
       if (!window.kakao?.maps?.load) {
         reject(new Error('카카오 지도 SDK를 초기화하지 못했습니다.'))
@@ -583,6 +663,16 @@ function loadKakaoMapsSdk() {
       return
     }
 
+    if (existingScript) {
+      existingScript.addEventListener('load', finish, { once: true })
+      existingScript.addEventListener(
+        'error',
+        () => reject(new Error('카카오 지도를 불러오지 못했습니다.')),
+        { once: true },
+      )
+      return
+    }
+
     const script = document.createElement('script')
     script.async = true
     script.dataset.kakaoMapsSdk = 'true'
@@ -591,11 +681,11 @@ function loadKakaoMapsSdk() {
     script.onerror = () => reject(new Error('카카오 지도를 불러오지 못했습니다.'))
     document.head.appendChild(script)
   }).catch((error) => {
-    kakaoMapsLoaderPromise = null
+    window.__closetKakaoMapsLoaderPromise = null
     throw error
   })
 
-  return kakaoMapsLoaderPromise
+  return window.__closetKakaoMapsLoaderPromise
 }
 
 async function initializeMapAndLoadStores() {
@@ -604,7 +694,20 @@ async function initializeMapAndLoadStores() {
 
   try {
     const kakao = await loadKakaoMapsSdk()
+    if (isUnmounted.value) {
+      return
+    }
+
+    await nextTick()
+
+    if (isUnmounted.value) {
+      return
+    }
+
     const center = await resolveInitialCenter(kakao)
+    if (isUnmounted.value) {
+      return
+    }
 
     if (!mapContainer.value) {
       throw new Error('지도를 표시할 공간을 찾을 수 없습니다.')
@@ -616,22 +719,35 @@ async function initializeMapAndLoadStores() {
     })
 
     captureMapBounds()
+    await loadStores(1)
+
+    if (isUnmounted.value || !map.value) {
+      return
+    }
 
     mapIdleHandler = handleMapIdle
     kakao.maps.event.addListener(map.value, 'idle', mapIdleHandler)
-
-    await loadStores(1)
   } catch (error) {
+    if (isUnmounted.value) {
+      return
+    }
+
     mapError.value = error instanceof Error ? error.message : '카카오 지도를 불러오지 못했습니다.'
     map.value = null
     clearMapMarkers()
     await loadStores(1)
   } finally {
-    isLoadingMap.value = false
+    if (!isUnmounted.value) {
+      isLoadingMap.value = false
+    }
   }
 }
 
 async function selectStore(store, { panToMap = true, scrollToCard = false } = {}) {
+  if (isUnmounted.value) {
+    return
+  }
+
   const key = getStoreKey(store)
 
   if (!key) {
@@ -648,6 +764,10 @@ async function selectStore(store, { panToMap = true, scrollToCard = false } = {}
 
   if (scrollToCard) {
     await nextTick()
+    if (isUnmounted.value) {
+      return
+    }
+
     scrollStoreCardIntoView(key)
   }
 }
@@ -657,7 +777,9 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  isUnmounted.value = true
   clearMapIdleTimer()
+  skipNextMapIdleRefresh = false
 
   if (map.value && mapIdleHandler && window.kakao?.maps?.event?.removeListener) {
     window.kakao.maps.event.removeListener(map.value, 'idle', mapIdleHandler)
@@ -665,13 +787,14 @@ onBeforeUnmount(() => {
 
   clearMapMarkers()
   storeCardRefs.clear()
+  mapIdleHandler = null
   map.value = null
 })
 </script>
 
 <template>
-  <main class="page-view store-view">
-    <section class="panel store-panel">
+  <section class="store-explorer-view store-view">
+    <div class="panel store-panel">
       <div class="page-header-row store-hero">
         <div>
           <p class="eyebrow">Neighborhood Stores</p>
@@ -869,6 +992,12 @@ onBeforeUnmount(() => {
           </p>
         </section>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
 </template>
+
+<style scoped>
+.store-explorer-view {
+  margin-top: 1rem;
+}
+</style>

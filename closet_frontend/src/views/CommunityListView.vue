@@ -1,15 +1,24 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { computed, reactive, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+
+import StoreExplorer from '@/components/stores/StoreExplorer.vue'
 import { useCommunityStore } from '@/stores/community'
 
 const store = useCommunityStore()
 const route = useRoute()
+const router = useRouter()
 
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
+const DEFAULT_BOARD = 'fashion'
+
+function normalizeBoard(value) {
+  const board = Array.isArray(value) ? value[0] : value
+  return VALID_BOARDS.includes(board) ? board : DEFAULT_BOARD
+}
 
 const filters = reactive({
-  board: VALID_BOARDS.includes(route.query.board) ? route.query.board : 'fashion',
+  board: normalizeBoard(route.query.board),
   gender: '',
   category: '',
   ordering: 'latest',
@@ -17,7 +26,9 @@ const filters = reactive({
 
 const searchInput = ref('')
 const appliedSearch = ref('')
-const showSearch = computed(() => filters.board !== 'local_shop')
+const hasSyncedBoard = ref(false)
+const isLocalShop = computed(() => filters.board === 'local_shop')
+const showSearch = computed(() => !isLocalShop.value)
 
 const BOARD_TABS = [
   { value: 'fashion', label: '패션 정보 공유' },
@@ -86,16 +97,30 @@ const EXPERIENCE_STATUS_CLASS = {
 }
 
 function selectBoard(value) {
-  filters.board = value
+  const nextBoard = normalizeBoard(value)
+
+  if (normalizeBoard(route.query.board) === nextBoard) {
+    return
+  }
+
+  router.push({
+    name: 'community',
+    query: { board: nextBoard },
+  })
+}
+
+function resetBoardFilters() {
   filters.gender = ''
   filters.category = ''
-  if (value === 'local_shop') filters.ordering = 'latest'
   searchInput.value = ''
   appliedSearch.value = ''
-  applyFilters()
 }
 
 function applyFilters() {
+  if (isLocalShop.value) {
+    return
+  }
+
   const params = { board: filters.board }
   if (filters.gender) params.gender = filters.gender
   if (filters.category) params.category = filters.category
@@ -115,14 +140,50 @@ function clearSearch() {
   applyFilters()
 }
 
-onMounted(() => applyFilters())
+watch(
+  () => route.query.board,
+  (boardQuery) => {
+    const normalizedBoard = normalizeBoard(boardQuery)
+    const rawBoard = Array.isArray(boardQuery) ? boardQuery[0] : boardQuery
+
+    if (rawBoard !== normalizedBoard) {
+      router.replace({
+        name: 'community',
+        query: { board: normalizedBoard },
+      })
+      return
+    }
+
+    const boardChanged = filters.board !== normalizedBoard
+
+    if (boardChanged) {
+      filters.board = normalizedBoard
+      resetBoardFilters()
+    }
+
+    if (!hasSyncedBoard.value || boardChanged) {
+      hasSyncedBoard.value = true
+      applyFilters()
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
-  <div class="community-list">
+  <div
+    class="community-list"
+    :class="{ 'community-list--local-shop': isLocalShop }"
+  >
     <div class="list-header">
       <h2>커뮤니티</h2>
-      <RouterLink class="btn-write" to="/community/new">글쓰기</RouterLink>
+      <RouterLink
+        v-if="!isLocalShop"
+        class="btn-write"
+        to="/community/new"
+      >
+        글쓰기
+      </RouterLink>
     </div>
 
     <!-- 상단 게시판 탭 -->
@@ -138,132 +199,148 @@ onMounted(() => applyFilters())
       </button>
     </div>
 
-    <!-- 패션 정보 공유 선택 시 하위 필터 -->
-    <div v-if="filters.board === 'fashion'" class="sub-filters">
-      <div class="sub-filter-row">
-        <button
-          v-for="o in GENDER_OPTIONS"
-          :key="o.value"
-          class="filter-chip"
-          :class="{ active: filters.gender === o.value }"
-          @click="filters.gender = o.value; applyFilters()"
-        >
-          {{ o.label }}
-        </button>
-      </div>
-      <div class="sub-filter-row">
-        <button
-          v-for="o in FASHION_CATEGORY_OPTIONS"
-          :key="o.value"
-          class="filter-chip"
-          :class="{ active: filters.category === o.value }"
-          @click="filters.category = o.value; applyFilters()"
-        >
-          {{ o.label }}
-        </button>
-      </div>
-    </div>
+    <StoreExplorer v-if="isLocalShop" />
 
-    <!-- 일상 & 소통 선택 시 하위 필터 -->
-    <div v-if="filters.board === 'daily'" class="sub-filters">
-      <div class="sub-filter-row">
-        <button
-          v-for="o in DAILY_CATEGORY_OPTIONS"
-          :key="o.value"
-          class="filter-chip"
-          :class="{ active: filters.category === o.value }"
-          @click="filters.category = o.value; applyFilters()"
-        >
-          {{ o.label }}
-        </button>
+    <template v-else>
+      <!-- 패션 정보 공유 선택 시 하위 필터 -->
+      <div v-if="filters.board === 'fashion'" class="sub-filters">
+        <div class="sub-filter-row">
+          <button
+            v-for="o in GENDER_OPTIONS"
+            :key="o.value"
+            class="filter-chip"
+            :class="{ active: filters.gender === o.value }"
+            @click="filters.gender = o.value; applyFilters()"
+          >
+            {{ o.label }}
+          </button>
+        </div>
+        <div class="sub-filter-row">
+          <button
+            v-for="o in FASHION_CATEGORY_OPTIONS"
+            :key="o.value"
+            class="filter-chip"
+            :class="{ active: filters.category === o.value }"
+            @click="filters.category = o.value; applyFilters()"
+          >
+            {{ o.label }}
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- 체험단 선택 시 하위 필터 -->
-    <div v-if="filters.board === 'experience'" class="sub-filters">
-      <div class="sub-filter-row">
-        <button
-          v-for="o in EXPERIENCE_CATEGORY_OPTIONS"
-          :key="o.value"
-          class="filter-chip"
-          :class="{ active: filters.category === o.value }"
-          @click="filters.category = o.value; applyFilters()"
-        >
-          {{ o.label }}
-        </button>
+      <!-- 일상 & 소통 선택 시 하위 필터 -->
+      <div v-if="filters.board === 'daily'" class="sub-filters">
+        <div class="sub-filter-row">
+          <button
+            v-for="o in DAILY_CATEGORY_OPTIONS"
+            :key="o.value"
+            class="filter-chip"
+            :class="{ active: filters.category === o.value }"
+            @click="filters.category = o.value; applyFilters()"
+          >
+            {{ o.label }}
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- 정렬 -->
-    <div v-if="filters.board !== 'local_shop'" class="ordering-row">
-      <select v-model="filters.ordering" @change="applyFilters">
-        <option v-for="o in ORDERING_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
-      </select>
-    </div>
-
-    <!-- 검색 -->
-    <div v-if="showSearch" class="search-row">
-      <div class="search-box">
-        <input
-          v-model="searchInput"
-          type="text"
-          class="search-input"
-          placeholder="제목 또는 내용으로 검색"
-          @keydown.enter="submitSearch"
-        />
-        <button v-if="searchInput" class="btn-search-clear" @click="clearSearch" aria-label="검색어 지우기">✕</button>
-        <button class="btn-search" @click="submitSearch">검색</button>
+      <!-- 체험단 선택 시 하위 필터 -->
+      <div v-if="filters.board === 'experience'" class="sub-filters">
+        <div class="sub-filter-row">
+          <button
+            v-for="o in EXPERIENCE_CATEGORY_OPTIONS"
+            :key="o.value"
+            class="filter-chip"
+            :class="{ active: filters.category === o.value }"
+            @click="filters.category = o.value; applyFilters()"
+          >
+            {{ o.label }}
+          </button>
+        </div>
       </div>
-      <p v-if="appliedSearch" class="search-applied">
-        "<strong>{{ appliedSearch }}</strong>" 검색 결과
-        <button class="btn-search-reset" @click="clearSearch">전체 보기</button>
+
+      <!-- 정렬 -->
+      <div class="ordering-row">
+        <select v-model="filters.ordering" @change="applyFilters">
+          <option v-for="o in ORDERING_OPTIONS" :key="o.value" :value="o.value">
+            {{ o.label }}
+          </option>
+        </select>
+      </div>
+
+      <!-- 검색 -->
+      <div v-if="showSearch" class="search-row">
+        <div class="search-box">
+          <input
+            v-model="searchInput"
+            type="text"
+            class="search-input"
+            placeholder="제목 또는 내용으로 검색"
+            @keydown.enter="submitSearch"
+          />
+          <button
+            v-if="searchInput"
+            class="btn-search-clear"
+            @click="clearSearch"
+            aria-label="검색어 지우기"
+          >
+            ✕
+          </button>
+          <button class="btn-search" @click="submitSearch">검색</button>
+        </div>
+        <p v-if="appliedSearch" class="search-applied">
+          "<strong>{{ appliedSearch }}</strong>" 검색 결과
+          <button class="btn-search-reset" @click="clearSearch">전체 보기</button>
+        </p>
+      </div>
+
+      <p v-if="store.isLoading">불러오는 중...</p>
+      <p v-else-if="store.error" class="error">{{ store.error }}</p>
+      <p v-else-if="store.posts.length === 0 && appliedSearch">
+        "<strong>{{ appliedSearch }}</strong>"에 대한 검색 결과가 없습니다.
       </p>
-    </div>
+      <p v-else-if="store.posts.length === 0">게시글이 없습니다.</p>
 
-    <p v-if="store.isLoading">불러오는 중...</p>
-    <p v-else-if="store.error" class="error">{{ store.error }}</p>
-    <p v-else-if="store.posts.length === 0 && appliedSearch">
-      "<strong>{{ appliedSearch }}</strong>"에 대한 검색 결과가 없습니다.
-    </p>
-    <p v-else-if="store.posts.length === 0">게시글이 없습니다.</p>
-
-    <ul v-else class="post-list">
-      <li v-for="post in store.posts" :key="post.id" class="post-item">
-        <article class="post-card">
-          <div class="post-meta">
-            <span class="badge board-badge">{{ BOARD_LABEL[post.board] ?? post.board }}</span>
-            <span v-if="post.category" class="badge">{{ CATEGORY_LABEL[post.category] ?? post.category }}</span>
-            <span
-              v-if="post.experience_status"
-              class="badge status-badge"
-              :class="EXPERIENCE_STATUS_CLASS[post.experience_status]"
-            >
-              {{ EXPERIENCE_STATUS_LABEL[post.experience_status] }}
-            </span>
-          </div>
-          <RouterLink :to="`/community/${post.id}`" class="post-title-link">
-            <p class="post-title">{{ post.title }}</p>
-          </RouterLink>
-          <div class="post-info">
-            <RouterLink
-              v-if="post.author"
-              class="post-author-link"
-              :to="{ name: 'user-profile', params: { userId: post.author } }"
-            >
-              {{ post.author_name }}
+      <ul v-else class="post-list">
+        <li v-for="post in store.posts" :key="post.id" class="post-item">
+          <article class="post-card">
+            <div class="post-meta">
+              <span class="badge board-badge">{{ BOARD_LABEL[post.board] ?? post.board }}</span>
+              <span v-if="post.category" class="badge">
+                {{ CATEGORY_LABEL[post.category] ?? post.category }}
+              </span>
+              <span
+                v-if="post.experience_status"
+                class="badge status-badge"
+                :class="EXPERIENCE_STATUS_CLASS[post.experience_status]"
+              >
+                {{ EXPERIENCE_STATUS_LABEL[post.experience_status] }}
+              </span>
+            </div>
+            <RouterLink :to="`/community/${post.id}`" class="post-title-link">
+              <p class="post-title">{{ post.title }}</p>
             </RouterLink>
-            <span v-else>{{ post.author_name }}</span>
-            <span>조회 {{ post.view_count }}</span>
-            <span>좋아요 {{ post.like_count }}</span>
-          </div>
-        </article>
-      </li>
-    </ul>
+            <div class="post-info">
+              <RouterLink
+                v-if="post.author"
+                class="post-author-link"
+                :to="{ name: 'user-profile', params: { userId: post.author } }"
+              >
+                {{ post.author_name }}
+              </RouterLink>
+              <span v-else>{{ post.author_name }}</span>
+              <span>조회 {{ post.view_count }}</span>
+              <span>좋아요 {{ post.like_count }}</span>
+            </div>
+          </article>
+        </li>
+      </ul>
+    </template>
   </div>
 </template>
 
 <style scoped>
 .community-list { max-width: 800px; margin: 0 auto; padding: 1rem; }
+.community-list--local-shop { max-width: 1280px; }
 
 .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
 .btn-write { padding: 0.4rem 1rem; background: #333; color: #fff; border-radius: 4px; text-decoration: none; }
