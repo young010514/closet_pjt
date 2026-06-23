@@ -107,7 +107,7 @@ class PostDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         post.view_count += 1
         post.save(update_fields=['view_count'])
-        serializer = PostDetailSerializer(post, context={'request': request})
+        serializer = PostSerializer(post,context={'request':request})
         return Response(serializer.data)
 
     def put(self, request, pk):
