@@ -322,3 +322,9 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/python,django,venv,windows,vuejs,vue
 
 codex-history.md
+
+# Claude 관련 파일 및 기획 문서 제외
+.claude/
+CLAUDE.md
+closet_pjt_PRD.md
+closet_pjt_Spec.md
