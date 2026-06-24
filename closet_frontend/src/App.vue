@@ -12,6 +12,7 @@ const logoutError = ref('')
 const isLoggingOut = ref(false)
 const searchInput = ref('')
 
+
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isBusinessUser = computed(() => authStore.isBusinessUser)
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
@@ -125,6 +126,9 @@ watch(
 
   <nav class="topnav topnav--right" aria-label="사용자 메뉴">
     <template v-if="isAuthenticated">
+      <RouterLink v-if="isBusinessUser" class="topnav-link topnav-link--business" :to="{ name: 'business-dashboard' }">
+            사업자 대시보드
+          </RouterLink>
       <RouterLink class="topnav-link" to="/mypage">
         마이페이지
       </RouterLink>
