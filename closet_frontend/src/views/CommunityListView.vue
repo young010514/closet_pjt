@@ -24,7 +24,7 @@ function normalizeBoard(value) {
 }
 
 const filters = reactive({
-  board: normalizeBoard(route.query.board),
+  board: normalizeBoard(route.params.board),
   gender: '',
   category: '',
   ordering: 'latest',
@@ -111,13 +111,13 @@ const EXPERIENCE_STATUS_CLASS = {
 function selectBoard(value) {
   const nextBoard = normalizeBoard(value)
 
-  if (normalizeBoard(route.query.board) === nextBoard) {
+  if (normalizeBoard(route.params.board) === nextBoard) {
     return
   }
 
   router.push({
     name: 'community',
-    query: { board: nextBoard },
+    params: { board: nextBoard },
   })
 }
 
@@ -151,15 +151,15 @@ function clearSearch() {
 }
 
 watch(
-  () => route.query.board,
-  (boardQuery) => {
-    const normalizedBoard = normalizeBoard(boardQuery)
-    const rawBoard = Array.isArray(boardQuery) ? boardQuery[0] : boardQuery
+  () => route.params.board,
+  (boardParam) => {
+    const normalizedBoard = normalizeBoard(boardParam)
+    const rawBoard = Array.isArray(boardParam) ? boardParam[0] : boardParam
 
     if (rawBoard !== normalizedBoard) {
       router.replace({
         name: 'community',
-        query: { board: normalizedBoard },
+        params: { board: normalizedBoard },
       })
       return
     }

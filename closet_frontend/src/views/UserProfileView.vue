@@ -159,7 +159,7 @@ watch(userId, (value) => {
 
       <div v-else class="profile-state">
         <p class="alert alert--error">{{ profileError || '프로필을 찾을 수 없습니다.' }}</p>
-        <RouterLink class="button button--secondary" to="/community">커뮤니티로 돌아가기</RouterLink>
+        <RouterLink class="button button--secondary" to="/community/fashion">커뮤니티로 돌아가기</RouterLink>
       </div>
     </section>
 

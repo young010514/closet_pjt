@@ -64,7 +64,7 @@ onMounted(async () => {
 
 function goToList() {
   const board = post.value?.board ?? 'fashion'
-  router.push({ path: '/community', query: { board } })
+  router.push({ name: 'community', params: { board } })
 }
 
 async function handleLike() {
@@ -161,7 +161,7 @@ async function handleDelete() {
   const board = post.value?.board ?? 'fashion'
   try {
     await store.deletePost(pk)
-    router.push({ path: '/community', query: { board } })
+    router.push({ name: 'community', params: { board } })
   } catch { alert('삭제에 실패했습니다.') }
 }
 </script>

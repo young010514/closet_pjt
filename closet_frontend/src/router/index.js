@@ -1,4 +1,5 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+﻿
+import { createRouter, createWebHistory } from 'vue-router'
 
 import BusinessSignupView from '@/views/BusinessSignupView.vue'
 import CommunityDetailView from '@/views/CommunityDetailView.vue'
@@ -12,23 +13,29 @@ import UserProfileView from '@/views/UserProfileView.vue'
 import SignupSelectView from '@/views/SignupSelectView.vue'
 import { useAuthStore } from '@/stores/auth'
 
+const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
+const DEFAULT_BOARD = 'fashion'
+
+function normalizeBoard(value) {
+  const board = Array.isArray(value) ? value[0] : value
+  return VALID_BOARDS.includes(board) ? board : DEFAULT_BOARD
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
 
   routes: [
     {
       path: '/',
-      redirect: {
-        name: 'community',
-        query: { board: 'local_shop' },
-      },
+      redirect: '/community/local_shop',
     },
     {
       path: '/stores',
-      redirect: {
-        name: 'community',
-        query: { board: 'local_shop' },
-      },
+      redirect: '/community/local_shop',
+    },
+    {
+      path: '/community',
+      redirect: '/community/fashion',
     },
     {
       path: '/login',
@@ -71,30 +78,39 @@ const router = createRouter({
       component: UserProfileView,
     },
     {
-      path: '/community',
-      name: 'community',
-      component: CommunityListView,
-    },
-    {
       path: '/community/new',
       name: 'community-new',
       component: CommunityFormView,
     },
     {
-      path: '/community/:pk',
+      path: '/community/:pk(\\d+)/edit',
+      name: 'community-edit',
+      component: CommunityFormView,
+      props: { isEdit: true },
+    },
+    {
+      path: '/community/:pk(\\d+)',
       name: 'community-detail',
       component: CommunityDetailView,
     },
     {
-      path: '/community/:pk/edit',
-      name: 'community-edit',
-      component: CommunityFormView,
-      props: { isEdit: true },
+      path: '/community/:board([^/]+)',
+      name: 'community',
+      component: CommunityListView,
     },
   ],
 })
 
 router.beforeEach(async (to) => {
+  if (to.path === '/community' && to.query.board) {
+    return {
+      name: 'community',
+      params: { board: normalizeBoard(to.query.board) },
+      query: {},
+      replace: true,
+    }
+  }
+
   const authStore = useAuthStore()
 
   if (!authStore.isInitialized) {
