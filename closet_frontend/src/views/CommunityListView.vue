@@ -1191,27 +1191,7 @@ onBeforeUnmount(() => {
     class="community-list"
     :class="{ 'community-list--local-shop': isLocalShop }"
   >
-    <div class="list-header">
-      <h2>커뮤니티</h2>
-      <RouterLink
-        class="btn-write"
-        to="/community/new"
-      >
-        글쓰기
-      </RouterLink>
-    </div>
 
-    <div class="board-tabs">
-      <button
-        v-for="tab in BOARD_TABS"
-        :key="tab.value"
-        class="board-tab"
-        :class="{ active: filters.board === tab.value }"
-        @click="selectBoard(tab.value)"
-      >
-        {{ tab.label }}
-      </button>
-    </div>
 
     <template v-if="isLocalShop">
       <section class="store-explorer-view store-view">
@@ -1478,6 +1458,8 @@ onBeforeUnmount(() => {
     </template>
 
     <template v-else>
+      <div class="filter-section">
+        <div class="filter-content">
       <div v-if="filters.board === 'fashion'" class="sub-filters">
         <div class="sub-filter-row">
           <button
@@ -1529,6 +1511,14 @@ onBeforeUnmount(() => {
             {{ o.label }}
           </button>
         </div>
+      </div>
+      </div>
+      <RouterLink
+        class="btn-write"
+        to="/community/new"
+      >
+        글쓰기
+      </RouterLink>
       </div>
 
       <div class="ordering-row">
@@ -1630,8 +1620,24 @@ onBeforeUnmount(() => {
   margin-bottom: 1.2rem;
 }
 
+
+.filter-section {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  gap: 16px;
+}
+
+.filter-content {
+  flex: 1;
+}
+
 .btn-write {
+  margin-left: auto;
+  margin-top: 10px;
+  flex-shrink: 0;
   padding: 0.4rem 1rem;
+
   background: #333;
   color: #fff;
   border-radius: 4px;

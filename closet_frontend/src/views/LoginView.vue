@@ -128,7 +128,7 @@ async function submitLogin() {
 
       <p class="panel-footer">
         계정이 없다면
-        <RouterLink to="/signup">회원가입</RouterLink>
+        <RouterLink to="/signup/normal">회원가입</RouterLink>
       </p>
     </section>
   </main>

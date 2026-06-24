@@ -10,7 +10,6 @@ import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
 import UserSearchView from '@/views/UserSearchView.vue'
 import UserProfileView from '@/views/UserProfileView.vue'
-import SignupSelectView from '@/views/SignupSelectView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
@@ -43,12 +42,7 @@ const router = createRouter({
       component: LoginView,
       meta: { guestOnly: true },
     },
-    {
-      path: '/signup',
-      name: 'signup',
-      component: SignupSelectView,
-      meta: { guestOnly: true },
-    },
+
     {
       path: '/signup/normal',
       name: 'signup-normal',
