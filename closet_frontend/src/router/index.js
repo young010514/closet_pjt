@@ -75,12 +75,14 @@ const router = createRouter({
       path: '/community/new',
       name: 'community-new',
       component: CommunityFormView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/community/:pk(\\d+)/edit',
       name: 'community-edit',
       component: CommunityFormView,
       props: { isEdit: true },
+      meta: { requiresAuth: true },
     },
     {
       path: '/community/:pk(\\d+)',

@@ -79,6 +79,54 @@ class PostAuthorFilterTests(TestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class PostCreatePermissionTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.author = create_user_with_profile(
+            "creator",
+            "creator@example.com",
+            "작성자",
+            "01011110099",
+        )
+
+    def test_anonymous_post_create_requires_login(self):
+        request = self.factory.post(
+            "/api/community/posts/",
+            {
+                "board": "fashion",
+                "title": "Guest post",
+                "content": "should not be created",
+            },
+            format="json",
+        )
+
+        response = PostListCreateView.as_view()(request)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(Post.objects.count(), 0)
+
+    def test_authenticated_post_create_succeeds(self):
+        request = self.factory.post(
+            "/api/community/posts/",
+            {
+                "board": "fashion",
+                "title": "New post",
+                "content": "post body",
+            },
+            format="json",
+        )
+        force_authenticate(request, user=self.author)
+
+        response = PostListCreateView.as_view()(request)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Post.objects.count(), 1)
+        post = Post.objects.first()
+        self.assertIsNotNone(post)
+        self.assertEqual(post.author, self.author)
+        self.assertEqual(post.title, "New post")
+
+
 class PostLikeViewTests(TestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
