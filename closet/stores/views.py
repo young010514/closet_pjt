@@ -6,7 +6,10 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import BusinessProfile
 from common.pagination import StandardPageNumberPagination
+from community.models import Post
+from community.serializers import PostSerializer
 
 from .models import Store
 from .serializers import StoreListSerializer
@@ -108,3 +111,44 @@ class StoreListView(APIView):
 
 
 store_list = StoreListView.as_view()
+
+
+class StoreLinkedPostsView(APIView):
+    """가게에 연결된 사업자의 local_shop 게시글을 반환한다."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            store = Store.objects.select_related("business_profile__user").get(
+                pk=pk, is_active=True
+            )
+        except Store.DoesNotExist:
+            return Response({"posts": []})
+
+        bp = store.business_profile
+
+        if bp is None:
+            addresses = [
+                a for a in [store.jibun_address, store.road_address] if a.strip()
+            ]
+            if addresses:
+                bp = (
+                    BusinessProfile.objects.select_related("user")
+                    .filter(address__in=addresses)
+                    .first()
+                )
+
+        if bp is None:
+            return Response({"posts": []})
+
+        posts = (
+            Post.objects.filter(author=bp.user, board="local_shop")
+            .order_by("-created_at")[:5]
+        )
+        return Response(
+            {"posts": PostSerializer(posts, many=True, context={"request": request}).data}
+        )
+
+
+store_linked_posts = StoreLinkedPostsView.as_view()

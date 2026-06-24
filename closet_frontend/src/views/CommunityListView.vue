@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import { getMyRegions, normalizeApiError } from '@/api/accounts'
 import { getDongs, getSigungus, getSidos } from '@/api/regions'
-import { STORE_PAGE_SIZE, getStores } from '@/api/stores'
+import { STORE_PAGE_SIZE, getStores, getStoreLinkedPosts } from '@/api/stores'
 import { useAuthStore } from '@/stores/auth'
 import { useCommunityStore } from '@/stores/community'
 
@@ -239,6 +239,9 @@ const mapError = ref('')
 const useCurrentBounds = ref(true)
 const selectedStoreId = ref(null)
 const hasInitializedLocalShopFilters = ref(false)
+const storeLinkedPosts = ref([])
+const isLoadingStorePosts = ref(false)
+const storeLinkedPostsError = ref('')
 
 const mapContainer = ref(null)
 const map = ref(null)
@@ -758,6 +761,9 @@ function resetStoreExplorerStateForUnmount() {
   useCurrentBounds.value = true
   selectedStoreId.value = null
   hasInitializedLocalShopFilters.value = false
+  storeLinkedPosts.value = []
+  isLoadingStorePosts.value = false
+  storeLinkedPostsError.value = ''
 }
 
 function resetStoreFilters() {
@@ -1113,6 +1119,13 @@ async function selectStore(store, { panToMap = true, scrollToCard = false } = {}
     return
   }
 
+  const isAlreadySelected = selectedStoreId.value === key
+
+  if (!isAlreadySelected) {
+    storeLinkedPosts.value = []
+    storeLinkedPostsError.value = ''
+  }
+
   selectedStoreId.value = key
 
   if (panToMap) {
@@ -1129,6 +1142,24 @@ async function selectStore(store, { panToMap = true, scrollToCard = false } = {}
     }
 
     scrollStoreCardIntoView(key)
+  }
+
+  if (!isAlreadySelected) {
+    isLoadingStorePosts.value = true
+    try {
+      const data = await getStoreLinkedPosts(store.id)
+      if (!isStoreExplorerUnmounted.value && selectedStoreId.value === key) {
+        storeLinkedPosts.value = Array.isArray(data.posts) ? data.posts : []
+      }
+    } catch {
+      if (!isStoreExplorerUnmounted.value && selectedStoreId.value === key) {
+        storeLinkedPostsError.value = '게시글을 불러오지 못했습니다.'
+      }
+    } finally {
+      if (!isStoreExplorerUnmounted.value && selectedStoreId.value === key) {
+        isLoadingStorePosts.value = false
+      }
+    }
   }
 }
 
@@ -1366,6 +1397,25 @@ onBeforeUnmount(() => {
                     <div class="store-card__footer">
                       <span v-if="getStorePhone(store)">전화 {{ getStorePhone(store) }}</span>
                       <span>지도로 위치를 확인해 보세요</span>
+                    </div>
+
+                    <div
+                      v-if="isSelectedStore(store)"
+                      class="store-linked-posts"
+                      @click.stop
+                    >
+                      <p v-if="isLoadingStorePosts" class="store-linked-posts__status">게시글 불러오는 중...</p>
+                      <p v-else-if="storeLinkedPostsError" class="store-linked-posts__error">{{ storeLinkedPostsError }}</p>
+                      <template v-else-if="storeLinkedPosts.length">
+                        <p class="store-linked-posts__label">사업자 게시글</p>
+                        <ul class="store-linked-posts__list">
+                          <li v-for="post in storeLinkedPosts" :key="post.id" class="store-linked-posts__item">
+                            <RouterLink :to="`/community/${post.id}`" class="store-linked-posts__link">
+                              {{ post.title }}
+                            </RouterLink>
+                          </li>
+                        </ul>
+                      </template>
                     </div>
                   </article>
                 </div>
@@ -1888,5 +1938,54 @@ onBeforeUnmount(() => {
 
 .store-explorer-view {
   margin-top: 1rem;
+}
+
+.store-linked-posts {
+  border-top: 1px solid #eee;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.store-linked-posts__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.store-linked-posts__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.store-linked-posts__item {
+  font-size: 0.88rem;
+}
+
+.store-linked-posts__link {
+  color: #3c5fbe;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.store-linked-posts__link:hover {
+  text-decoration: underline;
+}
+
+.store-linked-posts__status {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+}
+
+.store-linked-posts__error {
+  font-size: 0.85rem;
+  color: #c0392b;
+  margin: 0;
 }
 </style>
