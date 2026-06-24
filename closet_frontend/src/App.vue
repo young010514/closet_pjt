@@ -19,6 +19,9 @@ function normalizeBoard(value) {
   const board = Array.isArray(value) ? value[0] : value
   return VALID_BOARDS.includes(board) ? board : 'fashion'
 }
+const goUserSearch = () =>{
+  router.push('/users/search')
+}
 
 const normalizedBoard = computed(() => normalizeBoard(route.params.board))
 const isCommunityNavActive = computed(() => {
@@ -82,51 +85,80 @@ watch(
 
 <template>
   <div class="app-shell">
-    <header class="topbar">
-      <RouterLink class="brand-link" to="/">Closet</RouterLink>
+<header class="topbar">
+  <RouterLink class="brand-link" to="/">Closet</RouterLink>
 
+  <nav class="topnav topnav--center" aria-label="커뮤니티 메뉴">
+    <RouterLink
+      class="topnav-link"
+      active-class="topnav-link--active"
+      to="/community/fashion"
+    >
+      패션 정보 공유
+    </RouterLink>
 
-      <nav class="topnav" aria-label="주요 메뉴">
+    <RouterLink
+      class="topnav-link"
+      active-class="topnav-link--active"
+      to="/community/daily"
+    >
+      일상 &amp; 소통
+    </RouterLink>
 
-        <template v-if="isAuthenticated">
-          <RouterLink
-            class="topnav-link"
-            :class="{ 'topnav-link--active': isCommunityNavActive }"
-            :to="{ name: 'community', params: { board: 'fashion' } }"
-          >
-            커뮤니티
-          </RouterLink>
-          <RouterLink class="topnav-link" to="/mypage">마이페이지</RouterLink>
-          <button type="button" class="nav-button" :disabled="isLoggingOut" @click="logout">
-            {{ isLoggingOut ? '로그아웃 중' : '로그아웃' }}
-          </button>
-        </template>
-        <template v-else>
-          <RouterLink class="topnav-link" to="/login">로그인</RouterLink>
-          <RouterLink class="topnav-link" to="/signup">회원가입</RouterLink>
-        </template>
-      </nav>
+    <RouterLink
+      class="topnav-link"
+      active-class="topnav-link--active"
+      to="/community/local_shop"
+    >
+      우리 동네 가게
+    </RouterLink>
 
-      
-      <form class="topbar-search" @submit.prevent="submitHeaderSearch">
-        <label class="sr-only" for="topbar-user-search">유저 검색</label>
-        <input
-          id="topbar-user-search"
-          v-model="searchInput"
-          type="search"
-          placeholder="유저 검색"
-          autocomplete="off"
-          aria-label="유저 검색어 입력"
-        />
-        <button
-          type="submit"
-          class="button button--secondary topbar-search__button"
-          aria-label="유저 검색 실행"
-        >
-          검색
-        </button>
-      </form>
-    </header>
+    <RouterLink
+      class="topnav-link"
+      active-class="topnav-link--active"
+      to="/community/experience"
+    >
+      체험단
+    </RouterLink>
+  </nav>
+
+  <nav class="topnav topnav--right" aria-label="사용자 메뉴">
+    <template v-if="isAuthenticated">
+      <RouterLink class="topnav-link" to="/mypage">
+        마이페이지
+      </RouterLink>
+
+      <button
+        type="button"
+        class="nav-button"
+        :disabled="isLoggingOut"
+        @click="logout"
+      >
+        {{ isLoggingOut ? '로그아웃 중' : '로그아웃' }}
+      </button>
+    </template>
+
+    <template v-else>
+      <RouterLink class="topnav-link" to="/login">
+        로그인
+      </RouterLink>
+
+      <RouterLink class="topnav-link" to="/signup">
+        회원가입
+      </RouterLink>
+    </template>
+
+    <button
+      type="button"
+      class="button button--secondary topbar-search__button"
+      aria-label="유저 검색 페이지로 이동"
+      @click="goUserSearch"
+    >
+      검색
+    </button>
+  </nav>
+</header>
+
 
     <p v-if="logoutError" class="shell-error" role="alert">{{ logoutError }}</p>
 
