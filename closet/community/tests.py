@@ -1,10 +1,10 @@
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from accounts.models import User, UserProfile
 
 from .models import Post
-from .views import PostListCreateView
+from .views import PostLikeView, PostListCreateView
 
 
 def create_user_with_profile(username, email, nickname, phone):
@@ -77,3 +77,61 @@ class PostAuthorFilterTests(TestCase):
         response = PostListCreateView.as_view()(request)
 
         self.assertEqual(response.status_code, 400)
+
+
+class PostLikeViewTests(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.author = create_user_with_profile(
+            "author",
+            "author@example.com",
+            "작성자",
+            "01011110010",
+        )
+        self.liker = create_user_with_profile(
+            "liker",
+            "liker@example.com",
+            "좋아요유저",
+            "01011110011",
+        )
+        self.post = Post.objects.create(
+            author=self.author,
+            board="fashion",
+            title="Like me",
+            content="post content",
+        )
+
+    def test_like_toggle_updates_like_count_and_state(self):
+        request = self.factory.post(
+            f"/api/community/posts/{self.post.id}/like/",
+            {},
+            format="json",
+        )
+        force_authenticate(request, user=self.liker)
+
+        response = PostLikeView.as_view()(request, pk=self.post.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["is_liked"])
+        self.assertEqual(response.data["like_count"], 1)
+
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.like_count, 1)
+        self.assertTrue(self.post.liked_users.filter(pk=self.liker.pk).exists())
+
+        second_request = self.factory.post(
+            f"/api/community/posts/{self.post.id}/like/",
+            {},
+            format="json",
+        )
+        force_authenticate(second_request, user=self.liker)
+
+        second_response = PostLikeView.as_view()(second_request, pk=self.post.id)
+
+        self.assertEqual(second_response.status_code, 200)
+        self.assertFalse(second_response.data["is_liked"])
+        self.assertEqual(second_response.data["like_count"], 0)
+
+        self.post.refresh_from_db()
+        self.assertEqual(self.post.like_count, 0)
+        self.assertFalse(self.post.liked_users.filter(pk=self.liker.pk).exists())

@@ -238,6 +238,7 @@ const storeError = ref('')
 const mapError = ref('')
 const useCurrentBounds = ref(true)
 const selectedStoreId = ref(null)
+const hasInitializedLocalShopFilters = ref(false)
 
 const mapContainer = ref(null)
 const map = ref(null)
@@ -756,6 +757,7 @@ function resetStoreExplorerStateForUnmount() {
   mapError.value = ''
   useCurrentBounds.value = true
   selectedStoreId.value = null
+  hasInitializedLocalShopFilters.value = false
 }
 
 function resetStoreFilters() {
@@ -822,9 +824,46 @@ async function geocodeAddress(kakao, address) {
   })
 }
 
-async function resolveInitialCenter(kakao) {
+function sortRegionsByPriority(regions) {
+  return [...regions]
+    .map((region, index) => ({
+      region,
+      index,
+    }))
+    .sort((left, right) => {
+      const leftPriority = Number(left.region?.priority)
+      const rightPriority = Number(right.region?.priority)
+
+      const normalizedLeft = Number.isFinite(leftPriority)
+        ? leftPriority
+        : Number.POSITIVE_INFINITY
+      const normalizedRight = Number.isFinite(rightPriority)
+        ? rightPriority
+        : Number.POSITIVE_INFINITY
+
+      if (normalizedLeft !== normalizedRight) {
+        return normalizedLeft - normalizedRight
+      }
+
+      return left.index - right.index
+    })
+    .map(({ region }) => region)
+}
+
+function pickPrimaryRegion(regions) {
+  return sortRegionsByPriority(regions)[0] ?? null
+}
+
+function formatRegionAddress(region) {
+  return [region?.sido, region?.sigungu, region?.dong].filter(Boolean).join(' ').trim()
+}
+
+async function resolveInitialLocalShopContext(kakao) {
   if (isStoreExplorerUnmounted.value) {
-    return DEFAULT_CENTER
+    return {
+      center: DEFAULT_CENTER,
+      primaryRegion: null,
+    }
   }
 
   if (!authStore.isInitialized) {
@@ -836,54 +875,92 @@ async function resolveInitialCenter(kakao) {
   }
 
   if (isStoreExplorerUnmounted.value) {
-    return DEFAULT_CENTER
+    return {
+      center: DEFAULT_CENTER,
+      primaryRegion: null,
+    }
   }
 
   if (!authStore.isAuthenticated) {
-    return DEFAULT_CENTER
+    return {
+      center: DEFAULT_CENTER,
+      primaryRegion: null,
+    }
   }
 
   try {
     const data = await getMyRegions()
 
     if (isStoreExplorerUnmounted.value) {
-      return DEFAULT_CENTER
+      return {
+        center: DEFAULT_CENTER,
+        primaryRegion: null,
+      }
     }
 
-    const regions = Array.isArray(data.regions) ? data.regions : []
+    const primaryRegion = pickPrimaryRegion(Array.isArray(data.regions) ? data.regions : [])
 
-    if (!regions.length) {
-      return DEFAULT_CENTER
+    if (!primaryRegion) {
+      return {
+        center: DEFAULT_CENTER,
+        primaryRegion: null,
+      }
     }
 
-    const primaryRegion = [...regions].sort((left, right) => {
-      const leftPriority = Number(left?.priority)
-      const rightPriority = Number(right?.priority)
-
-      const normalizedLeft = Number.isFinite(leftPriority)
-        ? leftPriority
-        : Number.POSITIVE_INFINITY
-      const normalizedRight = Number.isFinite(rightPriority)
-        ? rightPriority
-        : Number.POSITIVE_INFINITY
-
-      return normalizedLeft - normalizedRight
-    })[0]
-
-    const address = [primaryRegion?.sido, primaryRegion?.sigungu, primaryRegion?.dong]
-      .filter(Boolean)
-      .join(' ')
-      .trim()
+    const address = formatRegionAddress(primaryRegion)
 
     if (!address) {
-      return DEFAULT_CENTER
+      return {
+        center: DEFAULT_CENTER,
+        primaryRegion,
+      }
     }
 
     const center = await geocodeAddress(kakao, address)
-    return center || DEFAULT_CENTER
+    return {
+      center: center || DEFAULT_CENTER,
+      primaryRegion,
+    }
   } catch (error) {
-    return DEFAULT_CENTER
+    return {
+      center: DEFAULT_CENTER,
+      primaryRegion: null,
+    }
   }
+}
+
+async function applyInitialLocalShopFilters(primaryRegion) {
+  if (hasInitializedLocalShopFilters.value || isStoreExplorerUnmounted.value) {
+    return false
+  }
+
+  const sido = String(primaryRegion?.sido ?? '').trim()
+  const sigungu = String(primaryRegion?.sigungu ?? '').trim()
+  const dong = String(primaryRegion?.dong ?? '').trim()
+
+  if (!sido || !sigungu || !dong) {
+    return false
+  }
+
+  hasInitializedLocalShopFilters.value = true
+  storeFilters.sido = sido
+
+  await loadSigungus()
+
+  if (isStoreExplorerUnmounted.value) {
+    return false
+  }
+
+  storeFilters.sigungu = sigungu
+
+  await loadDongs()
+
+  if (isStoreExplorerUnmounted.value) {
+    return false
+  }
+
+  storeFilters.dong = dong
+  return true
 }
 
 function loadKakaoMapsSdk() {
@@ -977,10 +1054,18 @@ async function initializeMapAndLoadStores() {
       return
     }
 
-    const center = await resolveInitialCenter(kakao)
+    const { center, primaryRegion } = await resolveInitialLocalShopContext(kakao)
 
     if (isStoreExplorerUnmounted.value) {
       return
+    }
+
+    if (primaryRegion) {
+      await applyInitialLocalShopFilters(primaryRegion)
+
+      if (isStoreExplorerUnmounted.value) {
+        return
+      }
     }
 
     if (!mapContainer.value) {
@@ -1109,7 +1194,6 @@ onBeforeUnmount(() => {
     <div class="list-header">
       <h2>커뮤니티</h2>
       <RouterLink
-        v-if="!isLocalShop"
         class="btn-write"
         to="/community/new"
       >
@@ -1314,7 +1398,8 @@ onBeforeUnmount(() => {
               >
                 <button
                   type="button"
-                  class="mini-button"
+                  class="mini
+                  -button"
                   :disabled="isLoadingStores || currentPage <= 1"
                   @click="handlePageChange(currentPage - 1)"
                 >
@@ -1529,7 +1614,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .community-list {
-  max-width: 800px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 1rem;
 }

@@ -59,7 +59,18 @@ class Post(models.Model):
     experience_participation_end = models.DateField(null=True, blank=True)
 
     view_count = models.PositiveIntegerField(default=0)
-    like_count = models.PositiveIntegerField(default=0)
+    # like_count 대신 like_users로 변경
+    liked_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='liked_posts',
+        blank=True,
+        verbose_name='좋아요한 유저들',
+    )
+
+    @property
+    def like_count(self):
+        return self.liked_users.count()
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

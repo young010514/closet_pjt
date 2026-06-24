@@ -139,10 +139,6 @@ onMounted(loadRegions)
           <h2>계정 정보</h2>
           <dl class="info-list">
             <div>
-              <dt>사용자 ID</dt>
-              <dd>{{ user.id }}</dd>
-            </div>
-            <div>
               <dt>아이디</dt>
               <dd>{{ displayValue(user.username) }}</dd>
             </div>
@@ -156,10 +152,6 @@ onMounted(loadRegions)
         <section class="info-section">
           <h2>프로필</h2>
           <dl class="info-list">
-            <div>
-              <dt>회원 유형</dt>
-              <dd>{{ formatUserType(profile?.user_type) }}</dd>
-            </div>
             <div>
               <dt>실명</dt>
               <dd>{{ displayValue(profile?.real_name) }}</dd>
