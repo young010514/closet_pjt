@@ -48,6 +48,7 @@ class PostListCreateView(APIView):
         board = request.query_params.get('board')
         gender = request.query_params.get('gender')
         category = request.query_params.get('category')
+        author = request.query_params.get('author')
         ordering = request.query_params.get('ordering', 'latest')
         search = request.query_params.get('search', '').strip()
 
@@ -57,6 +58,13 @@ class PostListCreateView(APIView):
             queryset = queryset.filter(gender=gender)
         if category:
             queryset = queryset.filter(category=category)
+        if author:
+            author = author.strip()
+            try:
+                author_id = int(author)
+            except (TypeError, ValueError):
+                return Response({'detail': 'Invalid author filter.'}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(author_id=author_id)
         if search:
             queryset = queryset.filter(Q(title__icontains=search) | Q(content__icontains=search))
 
@@ -145,16 +153,27 @@ class PostDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+
 class PostLikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, pk):
         try:
             post = Post.objects.get(pk=pk)
         except Post.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        post.like_count += 1
-        post.save(update_fields=['like_count'])
-        return Response({'like_count': post.like_count})
 
+        if post.liked_users.filter(pk=request.user.pk).exists():
+            post.liked_users.remove(request.user)
+            is_liked = False
+        else:
+            post.liked_users.add(request.user)
+            is_liked = True
+
+        return Response({
+            'is_liked': is_liked,
+            'like_count': post.like_count,
+        })
 
 class CommentListCreateView(APIView):
     def get(self, request, pk):

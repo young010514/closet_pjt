@@ -75,7 +75,8 @@ class PostSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'experience_end': '체험단 종료일은 모집 마감일 이후여야 합니다.'})
 
         return attrs
-
+    like_count=serializers.IntegerField(read_only=True)
+    is_liked=serializers.SerializerMethodField()
     class Meta:
         model = Post
         fields = [
@@ -85,12 +86,19 @@ class PostSerializer(serializers.ModelSerializer):
             'recruit_start', 'recruit_end', 'experience_end',
             'experience_participation_start', 'experience_participation_end',
             'experience_status', 'images', 'videos',
-            'view_count', 'like_count', 'created_at', 'updated_at',
+            'view_count', 'like_count','is_liked', 'created_at', 'updated_at',
         ]
         read_only_fields = [
             'author', 'author_name', 'experience_status', 'images', 'videos',
             'view_count', 'like_count', 'created_at', 'updated_at',
         ]
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+ 
+        if not request or not request.user.is_authenticated:
+            return False
+
+        return obj.liked_users.filter(pk=request.user.pk).exists()
 
 
 class ExperienceApplicationSerializer(serializers.ModelSerializer):

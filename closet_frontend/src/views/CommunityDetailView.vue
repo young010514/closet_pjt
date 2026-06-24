@@ -64,12 +64,21 @@ onMounted(async () => {
 
 function goToList() {
   const board = post.value?.board ?? 'fashion'
-  router.push({ path: '/community', query: { board } })
+  router.push({ name: 'community', params: { board } })
 }
 
 async function handleLike() {
-  try { await store.likePost(pk) }
-  catch { alert('좋아요 처리에 실패했습니다.') }
+  if (!authStore.isAuthenticated) {
+  alert('로그인이 필요합니다.')
+  router.push('/login')
+  return
+  }
+  try { await store.likePost(pk) }catch (error) {
+    console.error('좋아요 에러:', error)
+    console.error('응답 상태:', error.response?.status)
+    console.error('응답 데이터:', error.response?.data)
+    alert('좋아요 처리에 실패했습니다.')
+  }
 }
 
 function openApplyForm() {
@@ -161,7 +170,7 @@ async function handleDelete() {
   const board = post.value?.board ?? 'fashion'
   try {
     await store.deletePost(pk)
-    router.push({ path: '/community', query: { board } })
+    router.push({ name: 'community', params: { board } })
   } catch { alert('삭제에 실패했습니다.') }
 }
 </script>
@@ -262,7 +271,16 @@ async function handleDelete() {
       </template>
 
       <div class="actions">
-        <button class="btn-like" @click="handleLike">♥ 좋아요 {{ post.like_count }}</button>
+        <!-- <button class="btn-like" @click="handleLike">♥ 좋아요 {{ post.like_count }}</button> -->
+        <button
+          class="btn-like"
+          :class="{ active: post.is_liked }"
+          @click="handleLike"
+        >
+          {{ post.is_liked ? '♥ 좋아요 취소' : '♡ 좋아요' }}
+          {{ post.like_count }}
+        </button>
+
         <template v-if="authStore.isAuthenticated">
           <button class="btn-edit" @click="router.push(`/community/${pk}/edit`)">수정</button>
           <button class="btn-delete" @click="handleDelete">삭제</button>

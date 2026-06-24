@@ -20,17 +20,23 @@ function normalizeBoard(value) {
   return VALID_BOARDS.includes(board) ? board : 'fashion'
 }
 
-const normalizedBoard = computed(() => normalizeBoard(route.query.board))
+const normalizedBoard = computed(() => normalizeBoard(route.params.board))
 const isCommunityNavActive = computed(() => {
-  if (route.name === 'community') {
-    return normalizedBoard.value !== 'local_shop'
-  }
+  // if (route.name === 'community') {
+  //   return normalizedBoard.value !== 'local_shop'
+  // }
 
-  return ['community-new', 'community-detail', 'community-edit'].includes(String(route.name))
+  // return ['community-new', 'community-detail', 'community-edit'].includes(String(route.name))
+const communityRoutes = [
+    'community', 
+    'community-new', 
+    'community-detail', 
+    'community-edit'
+  ]
+  
+  // 2. 현재 페이지(route.name)가 이 배열에 포함되어 있다면 무조건 true를 반환합니다.
+  return communityRoutes.includes(String(route.name))
 })
-const isStoreNavActive = computed(
-  () => route.name === 'community' && normalizedBoard.value === 'local_shop',
-)
 
 function normalizeSearchTerm(value) {
   const raw = Array.isArray(value) ? value[0] : value
@@ -50,6 +56,8 @@ function submitHeaderSearch() {
 }
 
 async function logout() {
+  if (!window.confirm('로그아웃 하시겠습니까?')) return
+
   logoutError.value = ''
   isLoggingOut.value = true
 
@@ -84,7 +92,7 @@ watch(
           <RouterLink
             class="topnav-link"
             :class="{ 'topnav-link--active': isCommunityNavActive }"
-            :to="{ name: 'community', query: { board: 'fashion' } }"
+            :to="{ name: 'community', params: { board: 'fashion' } }"
           >
             커뮤니티
           </RouterLink>
