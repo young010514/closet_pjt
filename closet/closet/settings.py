@@ -173,3 +173,6 @@ GMS_API_STYLE = os.getenv("GMS_API_STYLE", "openai")
 GMS_TIMEOUT_SECONDS = _env_float("GMS_TIMEOUT_SECONDS", 30.0)
 GMS_API_KEY_HEADER = os.getenv("GMS_API_KEY_HEADER", "Authorization")
 GMS_API_AUTH_PREFIX = os.getenv("GMS_API_AUTH_PREFIX", "Bearer")
+# Windows에서 임시 파일 삭제 실패(PermissionError) 방지를 위해 메모리 처리 범위를 늘림
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB

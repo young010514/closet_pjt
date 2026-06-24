@@ -12,3 +12,8 @@ export async function getStores(params = {}) {
   return response.data
 }
 
+export async function getStoreLinkedPosts(storeId) {
+  const response = await api.get(`${STORE_BASE}/${storeId}/posts/`)
+  return response.data
+}
+
