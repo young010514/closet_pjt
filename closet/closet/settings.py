@@ -10,11 +10,38 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def _load_env_file(path):
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("\"'")
+        if key:
+            os.environ.setdefault(key, value)
+
+
+def _env_float(name, default):
+    try:
+        return float(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+_load_env_file(BASE_DIR.parent / ".env")
+_load_env_file(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -138,6 +165,14 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+PERSONAL_COLOR_PROVIDER = os.getenv("PERSONAL_COLOR_PROVIDER", "")
+GMS_API_URL = os.getenv("GMS_API_URL", "")
+GMS_API_KEY = os.getenv("GMS_API_KEY", "")
+GMS_MODEL = os.getenv("GMS_MODEL", "")
+GMS_API_STYLE = os.getenv("GMS_API_STYLE", "openai")
+GMS_TIMEOUT_SECONDS = _env_float("GMS_TIMEOUT_SECONDS", 30.0)
+GMS_API_KEY_HEADER = os.getenv("GMS_API_KEY_HEADER", "Authorization")
+GMS_API_AUTH_PREFIX = os.getenv("GMS_API_AUTH_PREFIX", "Bearer")
 # Windows에서 임시 파일 삭제 실패(PermissionError) 방지를 위해 메모리 처리 범위를 늘림
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
