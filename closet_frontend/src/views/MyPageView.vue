@@ -101,6 +101,8 @@ async function saveRegions() {
 }
 
 async function logout() {
+  if (!window.confirm('로그아웃 하시겠습니까?')) return
+
   await authStore.logout()
   router.push('/login')
 }
