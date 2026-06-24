@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import urllib.error
 from io import BytesIO
 from unittest.mock import patch
 
@@ -12,7 +14,13 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from accounts.models import User, UserProfile
 
 from .models import PersonalColorAnalysis
-from .exceptions import AnalysisProviderUnavailableError
+from .exceptions import AnalysisFailedError, AnalysisProviderUnavailableError
+from .services import (
+    GmsPersonalColorProvider,
+    get_personal_color_provider,
+    prepare_uploaded_image,
+    validate_normalized_result,
+)
 
 
 def create_user_with_profile(username, email, nickname, phone):
@@ -354,3 +362,172 @@ class PersonalColorAnalysisApiTests(TestCase):
         list_response = self.client.get("/api/personal-color/analyses/")
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(list_response.data["count"], 0)
+
+def make_gms_result(**overrides):
+    result = {
+        "result_type": "spring_warm",
+        "result_subtype": "bright",
+        "confidence": 91.2,
+        "summary": "summary",
+        "best_colors": [
+            {"name": "coral", "hex": "#F49A8A", "reason": "good"},
+        ],
+        "avoid_colors": [
+            {"name": "navy", "hex": "#233554", "reason": "bad"},
+        ],
+        "recommendations": {
+            "clothing": ["ivory shirt"],
+            "makeup": ["coral lip"],
+            "accessories": ["gold accessory"],
+        },
+        "analysis_metrics": {
+            "warmth": 0.8,
+            "brightness": 0.7,
+            "saturation": 0.6,
+            "contrast": 0.5,
+        },
+    }
+    result.update(overrides)
+    return result
+
+
+class FakeGmsResponse:
+    def __init__(self, payload):
+        self.payload = json.dumps(payload).encode("utf-8")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self):
+        return self.payload
+
+
+class GmsPersonalColorProviderTests(TestCase):
+    def test_get_provider_returns_gms_provider_when_configured(self):
+        with override_settings(
+            PERSONAL_COLOR_PROVIDER="gms",
+            GMS_API_KEY="test-key",
+            GMS_API_URL="https://gms.example/analyze",
+            GMS_MODEL="test-model",
+        ):
+            provider = get_personal_color_provider()
+
+        self.assertIsInstance(provider, GmsPersonalColorProvider)
+        self.assertEqual(provider.model_version, "test-model")
+
+    def test_gms_provider_requires_key_and_url(self):
+        with override_settings(
+            PERSONAL_COLOR_PROVIDER="gms",
+            GMS_API_KEY="",
+            GMS_API_URL="",
+        ):
+            with patch.dict("os.environ", {}, clear=True):
+                with self.assertRaises(AnalysisProviderUnavailableError):
+                    get_personal_color_provider()
+
+    def test_gms_provider_posts_image_and_normalizes_chat_response(self):
+        prepared_image = prepare_uploaded_image(make_image_file())
+        content = json.dumps(
+            make_gms_result(
+                resultType="spring warm",
+                confidence=0.91,
+            )
+        )
+        provider = GmsPersonalColorProvider(
+            api_url="https://gms.example/analyze",
+            api_key="test-key",
+            model="test-model",
+        )
+
+        with patch(
+            "personal_color.services.urllib.request.urlopen",
+            return_value=FakeGmsResponse(
+                {"choices": [{"message": {"content": content}}]}
+            ),
+        ) as mocked_urlopen:
+            result = provider.analyze(prepared_image)
+
+        request = mocked_urlopen.call_args.args[0]
+        request_body = json.loads(request.data.decode("utf-8"))
+
+        self.assertEqual(request.full_url, "https://gms.example/analyze")
+        self.assertEqual(request.get_header("Authorization"), "Bearer test-key")
+        self.assertEqual(request_body["model"], "test-model")
+        self.assertIn("messages", request_body)
+        self.assertEqual(result["result_type"], PersonalColorAnalysis.ResultType.SPRING_WARM)
+        self.assertEqual(result["confidence"], 91.0)
+        self.assertEqual(result["provider_name"], "gms")
+        self.assertEqual(result["model_version"], "test-model")
+        validate_normalized_result(result)
+
+    def test_gms_http_error_is_provider_unavailable(self):
+        prepared_image = prepare_uploaded_image(make_image_file())
+        provider = GmsPersonalColorProvider(
+            api_url="https://gms.example/analyze",
+            api_key="test-key",
+        )
+        http_error = urllib.error.HTTPError(
+            "https://gms.example/analyze",
+            400,
+            "Bad Request",
+            None,
+            BytesIO(b'{"message":"Invalid target domain"}'),
+        )
+
+        with patch(
+            "personal_color.services.urllib.request.urlopen",
+            side_effect=http_error,
+        ):
+            with self.assertRaises(AnalysisProviderUnavailableError):
+                provider.analyze(prepared_image)
+
+    def test_invalid_gms_result_fails_validation(self):
+        prepared_image = prepare_uploaded_image(make_image_file())
+        provider = GmsPersonalColorProvider(
+            api_url="https://gms.example/analyze",
+            api_key="test-key",
+        )
+
+        with patch(
+            "personal_color.services.urllib.request.urlopen",
+            return_value=FakeGmsResponse({"result": {"result_type": "spring_warm"}}),
+        ):
+            result = provider.analyze(prepared_image)
+
+        with self.assertRaises(AnalysisFailedError):
+            validate_normalized_result(result)
+
+
+class GmsPersonalColorAnalysisApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = create_user_with_profile(
+            "gms-user",
+            "gms@example.com",
+            "gms",
+            "01011112222",
+        )
+        self.client.force_login(self.user)
+
+    @override_settings(
+        PERSONAL_COLOR_PROVIDER="gms",
+        GMS_API_KEY="test-key",
+        GMS_API_URL="https://gms.example/analyze",
+    )
+    def test_invalid_gms_response_does_not_create_record(self):
+        with patch(
+            "personal_color.services.urllib.request.urlopen",
+            return_value=FakeGmsResponse({"result": {"result_type": "spring_warm"}}),
+        ):
+            response = self.client.post(
+                "/api/personal-color/analyses/",
+                {"image": make_image_file()},
+                format="multipart",
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.data["code"], "analysis_result_invalid")
+        self.assertEqual(PersonalColorAnalysis.objects.count(), 0)

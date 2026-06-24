@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import io
+import json
+import logging
 import os
 import random
+import socket
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
@@ -20,6 +26,9 @@ from .exceptions import (
     InvalidImageError,
 )
 from .models import PersonalColorAnalysis
+
+
+logger = logging.getLogger(__name__)
 
 
 ALLOWED_IMAGE_MIME_TYPES = {
@@ -50,6 +59,32 @@ RESULT_TYPE_ORDER = [
     PersonalColorAnalysis.ResultType.AUTUMN_WARM,
     PersonalColorAnalysis.ResultType.WINTER_COOL,
 ]
+
+GMS_PERSONAL_COLOR_PROMPT = """
+Analyze the uploaded face image for personal color styling.
+Return only one JSON object. Do not wrap it in markdown.
+Use Korean text for summaries, color names, reasons, and recommendations.
+The JSON schema must be:
+{
+  "result_type": "spring_warm | summer_cool | autumn_warm | winter_cool",
+  "result_subtype": "string",
+  "confidence": 0-100,
+  "summary": "string",
+  "best_colors": [{"name": "string", "hex": "#RRGGBB", "reason": "string"}],
+  "avoid_colors": [{"name": "string", "hex": "#RRGGBB", "reason": "string"}],
+  "recommendations": {
+    "clothing": ["string"],
+    "makeup": ["string"],
+    "accessories": ["string"]
+  },
+  "analysis_metrics": {
+    "warmth": 0-1,
+    "brightness": 0-1,
+    "saturation": 0-1,
+    "contrast": 0-1
+  }
+}
+""".strip()
 
 
 def color_item(name: str, hex_value: str, reason: str) -> dict[str, str]:
@@ -284,6 +319,302 @@ class MockPersonalColorProvider(PersonalColorProvider):
             "model_version": self.model_version,
         }
 
+def _get_setting(name: str, default: Any = "") -> Any:
+    value = getattr(settings, name, None)
+    if value not in (None, ""):
+        return value
+    return os.getenv(name, default)
+
+
+def _get_gms_timeout() -> float:
+    try:
+        timeout = float(_get_setting("GMS_TIMEOUT_SECONDS", 30.0))
+    except (TypeError, ValueError):
+        timeout = 30.0
+    return max(timeout, 1.0)
+
+
+def _strip_json_markdown(value: str) -> str:
+    text = value.strip()
+    if not text.startswith("```"):
+        return text
+
+    lines = text.splitlines()
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _parse_json_text(value: str) -> Any:
+    try:
+        return json.loads(_strip_json_markdown(value))
+    except json.JSONDecodeError as exc:
+        raise AnalysisFailedError(
+            "GMS analysis result was not valid JSON.",
+            code="analysis_result_invalid",
+        ) from exc
+
+
+def _extract_gms_result(value: Any) -> Any:
+    if isinstance(value, str):
+        return _extract_gms_result(_parse_json_text(value))
+
+    if not isinstance(value, dict):
+        return value
+
+    if any(
+        key in value
+        for key in (
+            "result_type",
+            "resultType",
+            "season",
+            "personal_color",
+            "personalColor",
+        )
+    ):
+        return value
+
+    choices = value.get("choices")
+    if isinstance(choices, list) and choices:
+        first_choice = choices[0]
+        if isinstance(first_choice, dict):
+            message = first_choice.get("message")
+            if isinstance(message, dict) and "content" in message:
+                return _extract_gms_result(message["content"])
+            for key in ("content", "text"):
+                if key in first_choice:
+                    return _extract_gms_result(first_choice[key])
+
+    candidates = []
+    for key in ("result", "analysis", "data", "output", "content", "text"):
+        if key in value:
+            candidates.append(value[key])
+
+    for candidate in candidates:
+        if isinstance(candidate, (dict, str)):
+            extracted = _extract_gms_result(candidate)
+            if extracted is not candidate or isinstance(extracted, dict):
+                return extracted
+
+    return value
+
+
+def _normalize_result_type_alias(value: Any) -> str:
+    normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+    if normalized in RESULT_TYPE_ORDER:
+        return normalized
+    if "spring" in normalized:
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+    if "summer" in normalized:
+        return PersonalColorAnalysis.ResultType.SUMMER_COOL
+    if "autumn" in normalized or "fall" in normalized:
+        return PersonalColorAnalysis.ResultType.AUTUMN_WARM
+    if "winter" in normalized:
+        return PersonalColorAnalysis.ResultType.WINTER_COOL
+    return str(value).strip()
+
+
+def _normalize_gms_result_shape(
+    value: Any,
+    *,
+    provider_name: str,
+    model_version: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise AnalysisFailedError(
+            "GMS analysis result format was invalid.",
+            code="analysis_result_invalid",
+        )
+
+    result = dict(value)
+    aliases = {
+        "resultType": "result_type",
+        "resultSubtype": "result_subtype",
+        "subtype": "result_subtype",
+        "bestColors": "best_colors",
+        "avoidColors": "avoid_colors",
+        "analysisMetrics": "analysis_metrics",
+        "metrics": "analysis_metrics",
+        "providerName": "provider_name",
+        "modelVersion": "model_version",
+    }
+    for source, target in aliases.items():
+        if source in result and target not in result:
+            result[target] = result[source]
+
+    for source in ("season", "personal_color", "personalColor"):
+        if source in result and "result_type" not in result:
+            result["result_type"] = result[source]
+
+    if "result_type" in result:
+        result["result_type"] = _normalize_result_type_alias(result["result_type"])
+
+    confidence = result.get("confidence")
+    if isinstance(confidence, (int, float)) and 0 <= confidence <= 1:
+        result["confidence"] = round(confidence * 100, 2)
+
+    result.setdefault("provider_name", provider_name)
+    result.setdefault("model_version", model_version)
+    return result
+
+
+class GmsPersonalColorProvider(PersonalColorProvider):
+    name = "gms"
+
+    def __init__(
+        self,
+        *,
+        api_url: str | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        api_style: str | None = None,
+        timeout: float | None = None,
+    ):
+        self.api_url = (api_url or str(_get_setting("GMS_API_URL", ""))).strip()
+        self.api_key = (api_key or str(_get_setting("GMS_API_KEY", ""))).strip()
+        self.model = (model or str(_get_setting("GMS_MODEL", ""))).strip()
+        self.api_style = (
+            api_style or str(_get_setting("GMS_API_STYLE", "openai")) or "openai"
+        ).strip().lower()
+        self.timeout = timeout or _get_gms_timeout()
+        self.model_version = self.model or "gms"
+
+        if not self.api_url or not self.api_key:
+            raise AnalysisProviderUnavailableError(
+                "GMS API configuration is missing.",
+                code="analysis_provider_unavailable",
+            )
+
+    def analyze(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
+        request = urllib.request.Request(
+            self.api_url,
+            data=json.dumps(
+                self._build_payload(prepared_image),
+                ensure_ascii=False,
+            ).encode("utf-8"),
+            headers=self._build_headers(),
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                response_body = response.read()
+        except urllib.error.HTTPError as exc:
+            self._raise_for_http_error(exc)
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            raise AnalysisProviderUnavailableError(
+                "GMS API request failed.",
+                code="analysis_provider_unavailable",
+            ) from exc
+
+        try:
+            response_json = json.loads(response_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise AnalysisFailedError(
+                "GMS API response was not valid JSON.",
+                code="analysis_result_invalid",
+            ) from exc
+
+        extracted = _extract_gms_result(response_json)
+        return _normalize_gms_result_shape(
+            extracted,
+            provider_name=self.name,
+            model_version=self.model_version,
+        )
+
+    def _build_headers(self) -> dict[str, str]:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        key_header = str(_get_setting("GMS_API_KEY_HEADER", "Authorization")).strip()
+        auth_prefix = str(_get_setting("GMS_API_AUTH_PREFIX", "Bearer")).strip()
+        if key_header:
+            value = self.api_key
+            if key_header.lower() == "authorization" and auth_prefix:
+                value = f"{auth_prefix} {self.api_key}"
+            headers[key_header] = value
+        return headers
+
+    def _build_payload(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
+        image_base64 = base64.b64encode(prepared_image.normalized_bytes).decode("ascii")
+
+        if self.api_style == "gemini":
+            return {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": GMS_PERSONAL_COLOR_PROMPT},
+                            {
+                                "inline_data": {
+                                    "mime_type": "image/png",
+                                    "data": image_base64,
+                                }
+                            },
+                        ]
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0.2,
+                    "responseMimeType": "application/json",
+                },
+            }
+
+        if self.api_style == "raw":
+            payload = {
+                "prompt": GMS_PERSONAL_COLOR_PROMPT,
+                "image": {
+                    "mime_type": "image/png",
+                    "data": image_base64,
+                },
+            }
+            if self.model:
+                payload["model"] = self.model
+            return payload
+
+        payload = {
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a personal color analysis assistant.",
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": GMS_PERSONAL_COLOR_PROMPT},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_base64}",
+                            },
+                        },
+                    ],
+                },
+            ],
+            "temperature": 0.2,
+            "response_format": {"type": "json_object"},
+        }
+        if self.model:
+            payload["model"] = self.model
+        return payload
+
+    def _raise_for_http_error(self, exc: urllib.error.HTTPError) -> None:
+        try:
+            response_body = exc.read().decode("utf-8", errors="replace")
+        except Exception:
+            response_body = ""
+
+        logger.warning(
+            "GMS API request failed: status=%s body=%s",
+            exc.code,
+            response_body[:1000],
+        )
+        raise AnalysisProviderUnavailableError(
+            "GMS API request failed.",
+            code="analysis_provider_unavailable",
+        ) from exc
 
 def _build_metrics(result_type: str, seed: int) -> dict[str, float]:
     config = SEASON_CONFIGS[result_type]["metrics"]
@@ -447,6 +778,9 @@ def get_personal_color_provider() -> PersonalColorProvider:
 
     if configured_provider == "mock":
         return MockPersonalColorProvider()
+
+    if configured_provider == "gms":
+        return GmsPersonalColorProvider()
 
     if not configured_provider and settings.DEBUG:
         return MockPersonalColorProvider()
@@ -678,7 +1012,16 @@ def analyze_prepared_image(prepared_image: PreparedPersonalColorImage) -> dict[s
             code="analysis_failed",
         ) from exc
 
-    return validate_normalized_result(raw_result)
+    try:
+        return validate_normalized_result(raw_result)
+    except AnalysisFailedError as exc:
+        if getattr(provider, "name", "") == "gms" and exc.code == "analysis_result_invalid":
+            logger.warning("GMS API returned invalid analysis result: %s", exc.message)
+            raise AnalysisProviderUnavailableError(
+                exc.message,
+                code=exc.code,
+            ) from exc
+        raise
 
 
 def analyze_personal_color(image_file) -> dict[str, Any]:
