@@ -146,7 +146,7 @@ async function submitSignup() {
     <section class="panel form-panel">
       <p class="eyebrow">Business Signup</p>
       <h1>사업자 회원가입</h1>
-      <RouterLink to="/signup/normal">일반 사용자로 회원가입 하시겠습니까?</RouterLink>
+      <RouterLink to="/signup/normal">일반사용자로 회원가입 하시겠습니까?</RouterLink>
 
       <div v-if="formErrors.length" class="alert alert--error" role="alert">
         <p v-for="message in formErrors" :key="message">{{ message }}</p>
