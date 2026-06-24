@@ -63,6 +63,10 @@ onMounted(async () => {
 })
 
 function goToList() {
+  if (route.query.from === 'business-dashboard') {
+    router.push({ name: 'business-dashboard' })
+    return
+  }
   const board = post.value?.board ?? 'fashion'
   router.push({ name: 'community', params: { board } })
 }

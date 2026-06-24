@@ -10,6 +10,7 @@ import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
 import UserSearchView from '@/views/UserSearchView.vue'
 import UserProfileView from '@/views/UserProfileView.vue'
+import LandingView from '@/views/LandingView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
@@ -26,7 +27,8 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/community/local_shop',
+      name: 'landing',
+      component: LandingView,
     },
     {
       path: '/stores',
