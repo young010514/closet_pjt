@@ -26,4 +26,5 @@ urlpatterns = [
     path("api/regions/", include("regions.urls")),
     path("api/stores/", include("stores.urls")),
     path('api/business/', include('business.urls')),
+    path("api/personal-color/", include("personal_color.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

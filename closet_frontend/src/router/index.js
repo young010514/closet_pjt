@@ -5,6 +5,7 @@ import BusinessSignupView from '@/views/BusinessSignupView.vue'
 import CommunityDetailView from '@/views/CommunityDetailView.vue'
 import CommunityFormView from '@/views/CommunityFormView.vue'
 import CommunityListView from '@/views/CommunityListView.vue'
+import PersonalColorView from '@/views/PersonalColorView.vue'
 import LoginView from '@/views/LoginView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
@@ -59,6 +60,12 @@ const router = createRouter({
       path: '/mypage',
       name: 'mypage',
       component: MyPageView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/personal-color',
+      name: 'personal-color',
+      component: PersonalColorView,
       meta: { requiresAuth: true },
     },
     {
