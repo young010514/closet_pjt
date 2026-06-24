@@ -80,6 +80,12 @@ onMounted(loadPosts)
         </div>
         <div class="store-list__item-actions">
           <router-link
+            :to="{ name: 'community-detail', params: { pk: post.id } }"
+            class="store-list__action-btn"
+          >
+            조회
+          </router-link>
+          <router-link
             :to="{ name: 'business-store-edit', params: { pk: post.id } }"
             class="store-list__action-btn"
           >

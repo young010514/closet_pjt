@@ -8,4 +8,5 @@ urlpatterns = [
     path('posts/<int:pk>/apply/', views.ExperienceApplicationView.as_view(), name='post-apply'),
     path('posts/<int:pk>/comments/', views.CommentListCreateView.as_view(), name='comment-list'),
     path('posts/<int:pk>/comments/<int:comment_pk>/', views.CommentDetailView.as_view(), name='comment-detail'),
+    path('my-applications/', views.MyApplicationsView.as_view(), name='my-applications'),
 ]

@@ -13,6 +13,7 @@ const isLoggingOut = ref(false)
 const searchInput = ref('')
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isBusinessUser = computed(() => authStore.isBusinessUser)
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
 
 function normalizeBoard(value) {

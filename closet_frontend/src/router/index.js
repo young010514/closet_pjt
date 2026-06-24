@@ -116,6 +116,30 @@ const router = createRouter({
       component: () => import('@/views/business/StorePostFormView.vue'),
       meta: { requiresAuth: true, requiresBusiness: true },
     },
+    {
+      path: '/business/experience',
+      name: 'business-experience',
+      component: () => import('@/views/business/ExperiencePostListView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/experience/new',
+      name: 'business-experience-new',
+      component: () => import('@/views/business/ExperiencePostFormView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/experience/:pk/edit',
+      name: 'business-experience-edit',
+      component: () => import('@/views/business/ExperiencePostFormView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/experience/:pk/applicants',
+      name: 'business-experience-applicants',
+      component: () => import('@/views/business/ExperienceApplicantView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
   ],
 })
 

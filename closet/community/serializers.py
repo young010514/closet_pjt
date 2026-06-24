@@ -104,8 +104,8 @@ class PostSerializer(serializers.ModelSerializer):
 class ExperienceApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExperienceApplication
-        fields = ['id', 'name', 'phone', 'sns_account', 'motivation', 'created_at']
-        read_only_fields = ['created_at']
+        fields = ['id', 'name', 'phone', 'sns_account', 'motivation', 'status', 'rejection_reason', 'created_at']
+        read_only_fields = ['status', 'rejection_reason', 'created_at']
 
 
 class CommentSerializer(serializers.ModelSerializer):

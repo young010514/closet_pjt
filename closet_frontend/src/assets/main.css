@@ -79,6 +79,17 @@
   background: var(--color-accent-soft);
 }
 
+.topnav-link.topnav-link--business {
+  color: #fff;
+  background: #3c5fbe;
+  border-color: #3c5fbe;
+}
+
+.topnav-link.topnav-link--business:hover {
+  background: #2d4a9a;
+  border-color: #2d4a9a;
+}
+
 .nav-button:hover,
 .topnav-link:hover {
   border-color: var(--color-border);
