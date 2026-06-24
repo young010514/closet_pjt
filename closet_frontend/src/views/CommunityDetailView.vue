@@ -38,7 +38,7 @@ const authorDisplayName = computed(
   () => authorProfile.value?.nickname ?? post.value?.author_name ?? '익명',
 )
 const isAuthorSelf = computed(
-  () => Boolean(authorProfile.value && authStore.user?.id === authorProfile.value.id),
+  () => authStore.isAuthenticated && authStore.user?.id === post.value?.author,
 )
 const isRecruit = computed(() => post.value?.board === 'experience' && post.value?.category === 'recruit')
 const isReview = computed(() => post.value?.board === 'experience' && post.value?.category === 'review')
@@ -281,7 +281,7 @@ async function handleDelete() {
           {{ post.like_count }}
         </button>
 
-        <template v-if="authStore.isAuthenticated">
+        <template v-if="isAuthorSelf">
           <button class="btn-edit" @click="router.push(`/community/${pk}/edit`)">수정</button>
           <button class="btn-delete" @click="handleDelete">삭제</button>
         </template>

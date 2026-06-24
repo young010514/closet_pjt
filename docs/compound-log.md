@@ -1,5 +1,72 @@
 ---
 date: 2026-06-24
+tags: [clean-cycle, board-category-injection, 409-conflict, duplicate-check, experience-status, access-control]
+category: review | test | verify | coding
+---
+
+## [2026-06-24] Phase 4 — 체험단 모집 및 제약사항 예외 처리 시스템
+
+### 발견된 문제
+
+- **[NIT / PUT 시 store_location 재주입 없음]** `closet/business/views.py` `ExperiencePostDetailView.put()` — POST와 달리 PUT에서 `store_location` 재주입 로직이 없음. 의도적 설계(수정 시 위치 변경 불필요)로 판단되어 BLOCKING 미승격. 단, 향후 위치 변경 요구사항이 추가될 경우 일관성 확보가 필요하다.
+
+- **[NIT / SerializerMethodField 포함 여부 미확인]** `experience_status`가 `PostSerializer`에 `SerializerMethodField`로 포함되는지 review 단계에서 확인 권고됨. 실제로는 정상 포함되어 있어 문제 없음.
+
+### 피드백 루프
+
+- 발생 횟수: 0회
+- review PASS (NIT만 존재) → test 5/5 PASS → verify 7/7 PASS
+- 수정 재실행 없이 단일 사이클 완료
+
+### 핵심 구현 패턴 (정상 작동 확인)
+
+- `board='experience'`, `category='recruit'` 값을 POST/PUT 시 `data.copy()` 후 주입 + `serializer.save()`로 이중 고정 → 클라이언트 임의 변경 차단
+- 신청자 명단: `post.author_id != request.user.pk` 조건으로 타인 접근 403 처리
+- 중복 신청: DB `unique_together` 충돌 전에 ORM 사전 검사 후 409 Conflict 반환
+- 기간 마감 판단: `experience_status != 'recruiting'` Python property 기반 — DB 쿼리 없이 판단
+
+### 반복 패턴 여부
+
+- **board/category 강제 서버 주입**: Phase 3 `store_location` 강제 저장 패턴(2026-06-24)과 동일 계열. **반복** — 클라이언트 입력 무시 + 서버 강제 주입 패턴이 이번 사이클에서도 올바르게 적용됨. 정착된 패턴으로 확인.
+- **중복 신청 409 처리**: 신규. `unique_together` 에러를 ORM 사전 검사로 회피하고 명시적 409 반환하는 패턴.
+- **`experience_status` property 기반 마감 판단**: 신규. DB 애노테이션 없이 Python property만으로 상태 판단.
+
+### 최종 결과
+
+| # | 항목 | 결과 |
+|---|------|------|
+| 1 | 커뮤니티 연동 (board/category 강제 고정) | PASS |
+| 2 | 신청자 명단 보안 (403 처리) | PASS |
+| 3 | 사업자 신청 차단 (user_type 검사 + 403) | PASS |
+| 4 | 기간 마감 차단 (experience_status property) | PASS |
+| 5 | 중복 신청 409 반환 | PASS |
+| verify 종합 판정 | PASS (7/7) | |
+
+### 수정/생성된 파일
+
+- `closet/community/views.py` — 중복 신청 HTTP 400 → 409 Conflict 변경
+- `closet/business/views.py` — `ExperiencePostListCreateView`, `ExperiencePostDetailView`, `ExperienceApplicantListView` 구현 (기존 stub 대체)
+- `closet_frontend/src/api/business.js` — 체험단 API 함수 6개 추가
+- `closet_frontend/src/views/business/ExperiencePostListView.vue` — 신규 생성
+- `closet_frontend/src/views/business/ExperiencePostFormView.vue` — 신규 생성 (등록/수정 겸용)
+- `closet_frontend/src/views/business/ExperienceApplicantView.vue` — 신규 생성
+- `closet_frontend/src/router/index.js` — 라우트 4개 추가
+
+### 개선 조치
+
+1. **CLAUDE.md 체크 항목 추가 제안**
+   - [ ] POST/PUT 시 `board`, `category` 등 서버 고정값은 `data.copy()` + 직접 할당으로 강제 주입하고 클라이언트 값을 신뢰하지 않는다 (Phase 3 store_location 패턴 동일)
+   - [ ] `unique_together` 제약이 있는 모델에 INSERT 전 ORM 사전 검사를 수행하고, 충돌 시 409를 명시적으로 반환한다 (IntegrityError를 그대로 500으로 노출하지 않는다)
+   - [ ] Python property 기반 상태 판단(experience_status 등)을 serializer에 포함할 때 `SerializerMethodField` 누락 여부를 review 단계에서 반드시 확인한다
+
+2. **정착된 패턴 (재사용 권장)**
+   - 서버 강제 주입: `data = request.data.copy(); data['field'] = server_value; serializer = Serializer(data=data)`
+   - 중복 체크 후 409: `if Model.objects.filter(...).exists(): return Response(..., status=409)`
+
+---
+
+---
+date: 2026-06-24
 tags: [verify-fail, input-validation, store-location, address-integrity, readonly-field, forced-server-value]
 category: review | test | verify | coding
 ---

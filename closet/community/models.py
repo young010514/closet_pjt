@@ -108,6 +108,15 @@ class PostImage(models.Model):
 
 
 class ExperienceApplication(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_APPROVED = 'approved'
+    STATUS_REJECTED = 'rejected'
+    STATUS_CHOICES = [
+        (STATUS_PENDING, '대기'),
+        (STATUS_APPROVED, '승인'),
+        (STATUS_REJECTED, '거절'),
+    ]
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='applications')
     applicant = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='experience_applications'
@@ -116,6 +125,8 @@ class ExperienceApplication(models.Model):
     phone = models.CharField(max_length=20)
     sns_account = models.CharField(max_length=100, blank=True, default='')
     motivation = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    rejection_reason = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

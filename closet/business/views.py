@@ -173,24 +173,140 @@ class StorePostDetailView(BusinessAPIView):
 
 
 class ExperiencePostListCreateView(BusinessAPIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     def get(self, request):
-        return Response({"message": "ok"})
+        ordering = request.query_params.get('ordering', 'latest')
+        qs = Post.objects.filter(author=request.user, board='experience', category='recruit').order_by(
+            ORDERING_MAP.get(ordering, '-created_at')
+        )
+        serializer = PostSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
 
     def post(self, request):
-        return Response({"message": "ok"})
+        data = request.data.copy()
+        data['board'] = 'experience'
+        data['category'] = 'recruit'
+        serializer = PostSerializer(data=data, context={'request': request})
+        if serializer.is_valid():
+            try:
+                store_location = ' '.join(request.user.business_profile.address.split())
+            except Exception:
+                store_location = ''
+            post = serializer.save(
+                author=request.user,
+                board='experience',
+                category='recruit',
+                store_location=store_location,
+            )
+            images = request.FILES.getlist('images')
+            if images:
+                save_images(post, images)
+            return Response(
+                PostSerializer(post, context={'request': request}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ExperiencePostDetailView(BusinessAPIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def _get_own_post(self, request, pk):
+        try:
+            post = Post.objects.get(pk=pk, board='experience', category='recruit')
+        except Post.DoesNotExist:
+            return None, Response(status=status.HTTP_404_NOT_FOUND)
+        if post.author_id != request.user.pk:
+            return None, Response({'detail': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        return post, None
+
     def get(self, request, pk):
-        return Response({"message": "ok"})
+        post, err = self._get_own_post(request, pk)
+        if err:
+            return err
+        return Response(PostSerializer(post, context={'request': request}).data)
 
     def put(self, request, pk):
-        return Response({"message": "ok"})
+        post, err = self._get_own_post(request, pk)
+        if err:
+            return err
+        data = request.data.copy()
+        data['board'] = 'experience'
+        data['category'] = 'recruit'
+        serializer = PostSerializer(post, data=data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            updated_post = serializer.save(board='experience', category='recruit')
+            new_images = request.FILES.getlist('images')
+            if new_images:
+                updated_post.images.all().delete()
+                save_images(updated_post, new_images)
+            return Response(PostSerializer(updated_post, context={'request': request}).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        return Response({"message": "ok"})
+        post, err = self._get_own_post(request, pk)
+        if err:
+            return err
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExperienceApplicantListView(BusinessAPIView):
     def get(self, request, pk):
-        return Response({"message": "ok"})
+        try:
+            post = Post.objects.get(pk=pk, board='experience', category='recruit')
+        except Post.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if post.author_id != request.user.pk:
+            return Response({'detail': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+        applications = post.applications.select_related('applicant').order_by('created_at')
+        data = [
+            {
+                'id': a.id,
+                'applicant_id': a.applicant_id,
+                'name': a.name,
+                'phone': a.phone,
+                'sns_account': a.sns_account,
+                'motivation': a.motivation,
+                'status': a.status,
+                'rejection_reason': a.rejection_reason,
+                'created_at': a.created_at,
+            }
+            for a in applications
+        ]
+        return Response(data)
+
+
+class ExperienceApplicantDecisionView(BusinessAPIView):
+    def patch(self, request, pk, application_id):
+        try:
+            post = Post.objects.get(pk=pk, board='experience', category='recruit')
+        except Post.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if post.author_id != request.user.pk:
+            return Response({'detail': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            application = ExperienceApplication.objects.get(pk=application_id, post=post)
+        except ExperienceApplication.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        decision = request.data.get('status')
+        if decision not in (ExperienceApplication.STATUS_APPROVED, ExperienceApplication.STATUS_REJECTED):
+            return Response({'detail': '유효하지 않은 상태값입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if decision == ExperienceApplication.STATUS_REJECTED:
+            rejection_reason = request.data.get('rejection_reason', '').strip()
+            if not rejection_reason:
+                return Response({'detail': '거절 사유를 입력해주세요.'}, status=status.HTTP_400_BAD_REQUEST)
+            application.rejection_reason = rejection_reason
+
+        application.status = decision
+        application.save(update_fields=['status', 'rejection_reason'])
+
+        return Response({
+            'id': application.id,
+            'status': application.status,
+            'rejection_reason': application.rejection_reason,
+        })

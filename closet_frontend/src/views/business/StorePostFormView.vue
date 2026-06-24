@@ -65,7 +65,7 @@ async function handleSubmit() {
     } else {
       await createStorePost(formData)
     }
-    router.push({ name: 'business-store' })
+    router.push({ name: 'business-dashboard' })
   } catch (err) {
     errorMessage.value = err?.response?.data?.detail || '저장에 실패했습니다.'
   } finally {
@@ -131,7 +131,7 @@ async function handleSubmit() {
         <button
           type="button"
           class="store-form__cancel-btn"
-          @click="router.push({ name: 'business-store' })"
+          @click="router.push({ name: 'business-dashboard' })"
         >
           취소
         </button>

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
 import { getMyRegions, normalizeApiError, updateMyRegions } from '@/api/accounts'
+import { getMyApplications } from '@/api/community'
 import RegionSelector from '@/components/RegionSelector.vue'
 import { useAuthStore } from '@/stores/auth'
 
@@ -16,6 +17,9 @@ const regionMessage = ref('')
 const regionMessageError = ref(false)
 const isLoadingRegions = ref(false)
 const isSavingRegions = ref(false)
+
+const myApplications = ref([])
+const isLoadingApplications = ref(false)
 
 const user = computed(() => authStore.user)
 const profile = computed(() => user.value?.profile || null)
@@ -107,7 +111,29 @@ async function logout() {
   router.push('/login')
 }
 
-onMounted(loadRegions)
+function applicationStatusLabel(s) {
+  if (s === 'approved') return '승인'
+  if (s === 'rejected') return '거절'
+  return '검토 중'
+}
+
+async function loadApplications() {
+  if (!authStore.isAuthenticated || authStore.user?.profile?.user_type !== 'normal') return
+  isLoadingApplications.value = true
+  try {
+    const res = await getMyApplications()
+    myApplications.value = res.data
+  } catch {
+    // 조회 실패 시 빈 목록 유지
+  } finally {
+    isLoadingApplications.value = false
+  }
+}
+
+onMounted(() => {
+  loadRegions()
+  loadApplications()
+})
 </script>
 
 <template>
@@ -205,6 +231,36 @@ onMounted(loadRegions)
           </dl>
         </section>
 
+        <section v-if="profile?.user_type === 'normal'" class="info-section">
+          <h2>내 체험단 신청 내역</h2>
+          <p v-if="isLoadingApplications" class="muted-text">불러오는 중...</p>
+          <p v-else-if="myApplications.length === 0" class="muted-text">신청한 체험단이 없습니다.</p>
+          <table v-else class="mypage-applications">
+            <thead>
+              <tr>
+                <th>체험단</th>
+                <th>신청 상태</th>
+                <th>거절 사유</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="app in myApplications" :key="app.id">
+                <td>
+                  <RouterLink :to="{ name: 'community-detail', params: { pk: app.post_id } }">
+                    {{ app.post_title }}
+                  </RouterLink>
+                </td>
+                <td>
+                  <span :class="['mypage-badge', `mypage-badge--${app.status}`]">
+                    {{ applicationStatusLabel(app.status) }}
+                  </span>
+                </td>
+                <td class="mypage-reject-reason">{{ app.rejection_reason || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
         <section class="info-section">
           <p v-if="isLoadingRegions" class="muted-text">지역 정보를 불러오는 중입니다.</p>
 
@@ -233,3 +289,39 @@ onMounted(loadRegions)
     </section>
   </main>
 </template>
+
+<style scoped>
+.mypage-applications {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.mypage-applications th,
+.mypage-applications td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  vertical-align: top;
+}
+.mypage-applications th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+.mypage-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.mypage-badge--pending { background: #f0f0f0; color: #555; }
+.mypage-badge--approved { background: #d4edda; color: #155724; }
+.mypage-badge--rejected { background: #f8d7da; color: #721c24; }
+.mypage-reject-reason {
+  color: #721c24;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+</style>
