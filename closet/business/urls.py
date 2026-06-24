@@ -9,4 +9,5 @@ urlpatterns = [
     path('experience/posts/', views.ExperiencePostListCreateView.as_view(), name='experience-post-list'),
     path('experience/posts/<int:pk>/', views.ExperiencePostDetailView.as_view(), name='experience-post-detail'),
     path('experience/posts/<int:pk>/applicants/', views.ExperienceApplicantListView.as_view(), name='experience-applicants'),
+    path('experience/posts/<int:pk>/applicants/<int:application_id>/decision/', views.ExperienceApplicantDecisionView.as_view(), name='experience-applicant-decision'),
 ]

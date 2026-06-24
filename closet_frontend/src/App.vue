@@ -13,6 +13,7 @@ const isLoggingOut = ref(false)
 const searchInput = ref('')
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const isBusinessUser = computed(() => authStore.isBusinessUser)
 const VALID_BOARDS = ['fashion', 'daily', 'local_shop', 'experience']
 
 function normalizeBoard(value) {
@@ -95,6 +96,9 @@ watch(
             :to="{ name: 'community', params: { board: 'fashion' } }"
           >
             커뮤니티
+          </RouterLink>
+          <RouterLink v-if="isBusinessUser" class="topnav-link topnav-link--business" :to="{ name: 'business-dashboard' }">
+            사업자 대시보드
           </RouterLink>
           <RouterLink class="topnav-link" to="/mypage">마이페이지</RouterLink>
           <button type="button" class="nav-button" :disabled="isLoggingOut" @click="logout">

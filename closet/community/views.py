@@ -149,6 +149,10 @@ class PostDetailView(APIView):
         post = self.get_object(pk)
         if not post:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        if not request.user.is_authenticated:
+            return Response({'detail': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+        if not post.author_id or post.author_id != request.user.pk:
+            return Response({'detail': '권한이 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
         post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -263,10 +267,34 @@ class ExperienceApplicationView(APIView):
             return Response({'detail': '프로필 정보가 없습니다.'}, status=status.HTTP_403_FORBIDDEN)
 
         if ExperienceApplication.objects.filter(post=post, applicant=request.user).exists():
-            return Response({'detail': '이미 신청하셨습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': '이미 신청하셨습니다.'}, status=status.HTTP_409_CONFLICT)
 
         serializer = ExperienceApplicationSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(post=post, applicant=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MyApplicationsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        applications = (
+            ExperienceApplication.objects
+            .filter(applicant=request.user)
+            .select_related('post')
+            .order_by('-created_at')
+        )
+        data = [
+            {
+                'id': a.id,
+                'post_id': a.post_id,
+                'post_title': a.post.title,
+                'status': a.status,
+                'rejection_reason': a.rejection_reason,
+                'created_at': a.created_at,
+            }
+            for a in applications
+        ]
+        return Response(data)

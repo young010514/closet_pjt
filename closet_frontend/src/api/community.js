@@ -53,3 +53,5 @@ export const createComment = (pk, data) => api.post(`/community/posts/${pk}/comm
 export const updateComment = (pk, commentPk, data) => api.put(`/community/posts/${pk}/comments/${commentPk}/`, data)
 
 export const deleteComment = (pk, commentPk) => api.delete(`/community/posts/${pk}/comments/${commentPk}/`)
+
+export const getMyApplications = () => api.get('/community/my-applications/')

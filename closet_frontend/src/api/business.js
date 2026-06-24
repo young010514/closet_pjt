@@ -23,3 +23,26 @@ export function updateStorePost(pk, formData) {
 export function deleteStorePost(pk) {
   return http.delete(`/business/store/posts/${pk}/`).then((r) => r.data)
 }
+
+export function getExperiencePosts(ordering = 'latest') {
+  return http.get('/business/experience/posts/', { params: { ordering } }).then((r) => r.data)
+}
+export function createExperiencePost(formData) {
+  return http.post('/business/experience/posts/', formData).then((r) => r.data)
+}
+export function getExperiencePost(pk) {
+  return http.get(`/business/experience/posts/${pk}/`).then((r) => r.data)
+}
+export function updateExperiencePost(pk, formData) {
+  return http.put(`/business/experience/posts/${pk}/`, formData).then((r) => r.data)
+}
+export function deleteExperiencePost(pk) {
+  return http.delete(`/business/experience/posts/${pk}/`).then((r) => r.data)
+}
+export function getExperienceApplicants(pk) {
+  return http.get(`/business/experience/posts/${pk}/applicants/`).then((r) => r.data)
+}
+
+export function decideApplicant(postPk, applicationId, data) {
+  return http.patch(`/business/experience/posts/${postPk}/applicants/${applicationId}/decision/`, data).then((r) => r.data)
+}
