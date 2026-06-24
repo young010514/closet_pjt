@@ -128,7 +128,10 @@ watch(
     <template v-if="isAuthenticated">
       <RouterLink v-if="isBusinessUser" class="topnav-link topnav-link--business" :to="{ name: 'business-dashboard' }">
             사업자 대시보드
-          </RouterLink>
+      </RouterLink>
+      <RouterLink class="topnav-link" active-class="topnav-link--active" to="/personal-color">
+        AI 퍼스널컬러
+      </RouterLink>
       <RouterLink class="topnav-link" to="/mypage">
         마이페이지
       </RouterLink>

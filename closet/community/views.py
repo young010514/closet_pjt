@@ -74,6 +74,9 @@ class PostListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
+        if not request.user.is_authenticated:
+            return Response({'detail': '로그인이 필요합니다.'}, status=status.HTTP_401_UNAUTHORIZED)
+
         board = request.data.get('board', '')
         category = request.data.get('category', '')
 

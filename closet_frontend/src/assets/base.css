@@ -75,3 +75,8 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+:where(a, button, [role='button']):focus-visible {
+  outline: 3px solid rgba(47, 125, 109, 0.24);
+  outline-offset: 2px;
+}

@@ -5,6 +5,7 @@ import BusinessSignupView from '@/views/BusinessSignupView.vue'
 import CommunityDetailView from '@/views/CommunityDetailView.vue'
 import CommunityFormView from '@/views/CommunityFormView.vue'
 import CommunityListView from '@/views/CommunityListView.vue'
+import PersonalColorView from '@/views/PersonalColorView.vue'
 import LoginView from '@/views/LoginView.vue'
 import MyPageView from '@/views/MyPageView.vue'
 import NormalSignupView from '@/views/NormalSignupView.vue'
@@ -62,6 +63,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/personal-color',
+      name: 'personal-color',
+      component: PersonalColorView,
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/users/search',
       name: 'user-search',
       component: UserSearchView,
@@ -75,12 +82,14 @@ const router = createRouter({
       path: '/community/new',
       name: 'community-new',
       component: CommunityFormView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/community/:pk(\\d+)/edit',
       name: 'community-edit',
       component: CommunityFormView,
       props: { isEdit: true },
+      meta: { requiresAuth: true },
     },
     {
       path: '/community/:pk(\\d+)',
