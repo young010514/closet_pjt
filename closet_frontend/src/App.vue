@@ -143,7 +143,7 @@ watch(
         로그인
       </RouterLink>
 
-      <RouterLink class="topnav-link" to="/signup">
+      <RouterLink class="topnav-link" to="/signup/normal">
         회원가입
       </RouterLink>
     </template>

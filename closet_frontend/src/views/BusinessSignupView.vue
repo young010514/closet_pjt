@@ -146,6 +146,7 @@ async function submitSignup() {
     <section class="panel form-panel">
       <p class="eyebrow">Business Signup</p>
       <h1>사업자 회원가입</h1>
+      <RouterLink to="/signup/normal">일반 사용자로 회원가입 하시겠습니까?</RouterLink>
 
       <div v-if="formErrors.length" class="alert alert--error" role="alert">
         <p v-for="message in formErrors" :key="message">{{ message }}</p>
@@ -233,7 +234,6 @@ async function submitSignup() {
           <button class="button button--primary" type="submit" :disabled="isSubmitting || authStore.isLoading">
             {{ isSubmitting ? '가입 중' : '가입하기' }}
           </button>
-          <RouterLink to="/signup">유형 다시 선택</RouterLink>
         </div>
       </form>
     </section>
