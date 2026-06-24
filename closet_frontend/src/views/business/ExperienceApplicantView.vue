@@ -90,7 +90,7 @@ async function submitReject() {
 
 <template>
   <main class="applicants">
-    <button class="applicants__back" @click="router.push({ name: 'business-experience' })">← 목록으로</button>
+    <button class="applicants__back" @click="router.push({ name: 'business-dashboard' })">← 목록으로</button>
     <h1 class="applicants__title">신청자 목록</h1>
 
     <div v-if="isLoading" class="applicants__status">불러오는 중...</div>

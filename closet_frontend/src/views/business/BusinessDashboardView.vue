@@ -210,7 +210,12 @@ function expStatusLabel(status) {
             <tbody>
               <tr v-for="item in dashboard.applicant_summary" :key="item.post_id">
                 <td>{{ item.post_id }}</td>
-                <td>{{ item.title }}</td>
+                <td>
+                  <router-link
+                    :to="{ name: 'business-experience-applicants', params: { pk: item.post_id } }"
+                    class="biz__applicant-link"
+                  >{{ item.title }}</router-link>
+                </td>
                 <td>{{ item.applicant_count }}</td>
               </tr>
             </tbody>
@@ -261,6 +266,9 @@ function expStatusLabel(status) {
             <span class="biz__list-date">{{ formatDate(post.created_at) }}</span>
           </div>
           <div class="biz__list-actions">
+            <router-link :to="{ name: 'community-detail', params: { pk: post.id }, query: { from: 'business-dashboard' } }" class="biz__btn biz__btn--view">
+              조회
+            </router-link>
             <router-link :to="{ name: 'business-store-edit', params: { pk: post.id } }" class="biz__btn biz__btn--edit">
               수정
             </router-link>
@@ -535,6 +543,8 @@ function expStatusLabel(status) {
   font-size: 0.8rem;
   white-space: nowrap;
 }
+.biz__applicant-link { color: #333; text-decoration: underline; cursor: pointer; }
+.biz__applicant-link:hover { color: #1a56db; }
 .biz__badge--recruiting { background: #dcfce7; color: #166534; }
 .biz__badge--closed { background: #fef3c7; color: #92400e; }
 .biz__badge--ended { background: #f3f4f6; color: #374151; }
