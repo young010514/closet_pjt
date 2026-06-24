@@ -71,7 +71,11 @@ async function submitLogin() {
       username: form.username.trim(),
       password: form.password,
     })
-    router.push(redirectTarget())
+    if (authStore.isBusinessUser) {
+      router.push('/business/dashboard')
+    } else {
+      router.push(redirectTarget())
+    }
   } catch (error) {
     applyApiErrors(error)
   } finally {

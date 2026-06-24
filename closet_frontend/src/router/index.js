@@ -91,6 +91,30 @@ const router = createRouter({
       component: CommunityFormView,
       props: { isEdit: true },
     },
+    {
+      path: '/business/dashboard',
+      name: 'business-dashboard',
+      component: () => import('@/views/business/BusinessDashboardView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/store',
+      name: 'business-store',
+      component: () => import('@/views/business/StorePostListView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/store/new',
+      name: 'business-store-new',
+      component: () => import('@/views/business/StorePostFormView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
+    {
+      path: '/business/store/:pk/edit',
+      name: 'business-store-edit',
+      component: () => import('@/views/business/StorePostFormView.vue'),
+      meta: { requiresAuth: true, requiresBusiness: true },
+    },
   ],
 })
 
@@ -105,6 +129,15 @@ router.beforeEach(async (to) => {
     return {
       name: 'login',
       query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.meta.requiresBusiness) {
+    if (!authStore.isAuthenticated) {
+      return { name: 'login', query: { redirect: to.fullPath } }
+    }
+    if (!authStore.isBusinessUser) {
+      return { name: 'community' }
     }
   }
 
