@@ -457,8 +457,58 @@ class GmsPersonalColorProviderTests(TestCase):
         self.assertEqual(request.get_header("Authorization"), "Bearer test-key")
         self.assertEqual(request_body["model"], "test-model")
         self.assertIn("messages", request_body)
+        self.assertEqual(request_body["max_completion_tokens"], 500)
+        user_content = request_body["messages"][0]["content"]
+        self.assertEqual(user_content[0]["type"], "text")
+        self.assertIn("personal color recommendation", user_content[0]["text"].lower())
+        self.assertEqual(user_content[1]["type"], "image_url")
+        self.assertEqual(user_content[1]["image_url"]["detail"], "low")
+        self.assertTrue(user_content[1]["image_url"]["url"].startswith("data:image/png;base64,"))
         self.assertEqual(result["result_type"], PersonalColorAnalysis.ResultType.SPRING_WARM)
         self.assertEqual(result["confidence"], 91.0)
+        self.assertEqual(result["provider_name"], "gms")
+        self.assertEqual(result["model_version"], "test-model")
+        validate_normalized_result(result)
+
+    def test_gms_provider_maps_korean_recommendation_response(self):
+        prepared_image = prepare_uploaded_image(make_image_file())
+        content = json.dumps(
+            {
+                "추천색상": {
+                    "색상": "쿨톤 핑크",
+                    "이유": "피부가 밝고 깨끗한 느낌을 주며, 차가운 색 조화가 잘 어울립니다.",
+                    "추천": "원피스나 스카프 같은 패션 아이템에 적용하세요.",
+                }
+            }
+        )
+        provider = GmsPersonalColorProvider(
+            api_url="https://gms.example/analyze",
+            api_key="test-key",
+            model="test-model",
+        )
+
+        with patch(
+            "personal_color.services.urllib.request.urlopen",
+            return_value=FakeGmsResponse(
+                {"choices": [{"message": {"content": content}}]}
+            ),
+        ) as mocked_urlopen:
+            result = provider.analyze(prepared_image)
+
+        request = mocked_urlopen.call_args.args[0]
+        request_body = json.loads(request.data.decode("utf-8"))
+
+        self.assertEqual(request.full_url, "https://gms.example/analyze")
+        self.assertEqual(request.get_header("Authorization"), "Bearer test-key")
+        self.assertEqual(request_body["model"], "test-model")
+        self.assertIn("messages", request_body)
+        self.assertEqual(result["result_type"], PersonalColorAnalysis.ResultType.SUMMER_COOL)
+        self.assertEqual(result["result_subtype"], "쿨톤 핑크")
+        self.assertEqual(result["confidence"], 80.0)
+        self.assertIn("쿨톤 핑크", result["summary"])
+        self.assertEqual(result["best_colors"][0]["name"], "쿨톤 핑크")
+        self.assertTrue(result["best_colors"][0]["hex"].startswith("#"))
+        self.assertTrue(result["recommendations"]["clothing"])
         self.assertEqual(result["provider_name"], "gms")
         self.assertEqual(result["model_version"], "test-model")
         validate_normalized_result(result)
@@ -484,7 +534,7 @@ class GmsPersonalColorProviderTests(TestCase):
             with self.assertRaises(AnalysisProviderUnavailableError):
                 provider.analyze(prepared_image)
 
-    def test_invalid_gms_result_fails_validation(self):
+    def test_non_json_gms_response_fails_validation(self):
         prepared_image = prepare_uploaded_image(make_image_file())
         provider = GmsPersonalColorProvider(
             api_url="https://gms.example/analyze",
@@ -493,12 +543,12 @@ class GmsPersonalColorProviderTests(TestCase):
 
         with patch(
             "personal_color.services.urllib.request.urlopen",
-            return_value=FakeGmsResponse({"result": {"result_type": "spring_warm"}}),
+            return_value=FakeGmsResponse(
+                {"choices": [{"message": {"content": "not json"}}]}
+            ),
         ):
-            result = provider.analyze(prepared_image)
-
-        with self.assertRaises(AnalysisFailedError):
-            validate_normalized_result(result)
+            with self.assertRaises(AnalysisFailedError):
+                provider.analyze(prepared_image)
 
 
 class GmsPersonalColorAnalysisApiTests(TestCase):
@@ -520,7 +570,9 @@ class GmsPersonalColorAnalysisApiTests(TestCase):
     def test_invalid_gms_response_does_not_create_record(self):
         with patch(
             "personal_color.services.urllib.request.urlopen",
-            return_value=FakeGmsResponse({"result": {"result_type": "spring_warm"}}),
+            return_value=FakeGmsResponse(
+                {"choices": [{"message": {"content": "not json"}}]}
+            ),
         ):
             response = self.client.post(
                 "/api/personal-color/analyses/",
