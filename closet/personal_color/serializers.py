@@ -2,10 +2,7 @@ from rest_framework import serializers
 
 from .exceptions import InvalidImageError
 from .models import PersonalColorAnalysis
-from .services_VER2 import (
-    create_personal_color_analysis,
-    prepare_uploaded_image,
-)
+from .services import create_gms_personal_color_analysis, validate_uploaded_image
 
 
 class PersonalColorAnalysisSerializer(serializers.ModelSerializer):
@@ -52,7 +49,7 @@ class PersonalColorAnalysisCreateSerializer(serializers.Serializer):
             )
 
         try:
-            prepared_image = prepare_uploaded_image(image)
+            attrs["_image"] = validate_uploaded_image(image)
         except InvalidImageError as exc:
             raise serializers.ValidationError(
                 {
@@ -60,8 +57,6 @@ class PersonalColorAnalysisCreateSerializer(serializers.Serializer):
                     "code": exc.code,
                 }
             ) from exc
-
-        attrs["_prepared_image"] = prepared_image
         return attrs
 
     def create(self, validated_data):
@@ -74,8 +69,8 @@ class PersonalColorAnalysisCreateSerializer(serializers.Serializer):
                 }
             )
 
-        prepared_image = validated_data["_prepared_image"]
-        return create_personal_color_analysis(
+        image = validated_data["_image"]
+        return create_gms_personal_color_analysis(
             user=request.user,
-            prepared_image=prepared_image,
+            image_file=image,
         )
