@@ -21,6 +21,7 @@ const form = reactive({
   business_number: '',
   business_phone: '',
   owner_name: '',
+  birth_date: '',
   address: '',
 })
 const terms = ref({
@@ -111,6 +112,7 @@ function buildPayload() {
     business_number: form.business_number.trim(),
     business_phone: form.business_phone.trim(),
     owner_name: form.owner_name.trim(),
+    birth_date: form.birth_date || null,
     address: form.address.trim(),
     service_terms_agreed: terms.value.service_terms_agreed,
     privacy_agreed: terms.value.privacy_agreed,
@@ -218,6 +220,12 @@ async function submitSignup() {
             <label for="business-owner-name">대표자명</label>
             <input id="business-owner-name" v-model="form.owner_name" type="text" required />
             <FormFieldError :errors="fieldErrors.owner_name" />
+          </div>
+
+          <div class="form-field">
+            <label for="business-birth-date">생년월일</label>
+            <input id="business-birth-date" v-model="form.birth_date" type="date" />
+            <FormFieldError :errors="fieldErrors.birth_date" />
           </div>
 
           <div class="form-field form-field--full">

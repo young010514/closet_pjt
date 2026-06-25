@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from community.models import ExperienceApplication, Post
+from community.models import ExperienceApplication, Post, PostImage, PostVideo
 from community.serializers import PostSerializer
 from community.views import save_images, save_videos
 
@@ -153,13 +153,17 @@ class StorePostDetailView(BusinessAPIView):
             except Exception:
                 store_location = ''
             updated_post = serializer.save(board='local_shop', store_location=store_location)
+            delete_image_ids = request.data.getlist('delete_image_ids')
+            if delete_image_ids:
+                PostImage.objects.filter(post=updated_post, pk__in=delete_image_ids).delete()
+            delete_video_ids = request.data.getlist('delete_video_ids')
+            if delete_video_ids:
+                PostVideo.objects.filter(post=updated_post, pk__in=delete_video_ids).delete()
             new_images = request.FILES.getlist('images')
             if new_images:
-                updated_post.images.all().delete()
                 save_images(updated_post, new_images)
             new_videos = request.FILES.getlist('videos')
             if new_videos:
-                updated_post.videos.all().delete()
                 save_videos(updated_post, new_videos)
             return Response(PostSerializer(updated_post, context={'request': request}).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
