@@ -9,11 +9,18 @@ const route = useRoute()
 const isEdit = computed(() => !!route.params.pk)
 
 const form = ref({ title: '', content: '', store_location: '' })
-const imageFiles = ref([])
-const videoFiles = ref([])
+const existingImages = ref([])
+const existingVideos = ref([])
+const imageIdsToDelete = ref(new Set())
+const videoIdsToDelete = ref(new Set())
+const imageFiles = ref([])   // { file, previewUrl }
+const videoFiles = ref([])   // { file }
 const isLoading = ref(false)
 const isSaving = ref(false)
 const errorMessage = ref('')
+
+const imageInputRef = ref(null)
+const videoInputRef = ref(null)
 
 onMounted(async () => {
   isLoading.value = true
@@ -26,6 +33,8 @@ onMounted(async () => {
       form.value.title = post.title
       form.value.content = post.content
       form.value.store_location = post.store_location || profileAddress
+      existingImages.value = post.images || []
+      existingVideos.value = post.videos || []
     } else {
       form.value.store_location = profileAddress
     }
@@ -36,12 +45,51 @@ onMounted(async () => {
   }
 })
 
+function toggleDeleteImage(id) {
+  const s = new Set(imageIdsToDelete.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  imageIdsToDelete.value = s
+}
+
+function toggleDeleteVideo(id) {
+  const s = new Set(videoIdsToDelete.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  videoIdsToDelete.value = s
+}
+
 function onImageChange(e) {
-  imageFiles.value = Array.from(e.target.files)
+  const newFiles = Array.from(e.target.files)
+  newFiles.forEach((file) => {
+    const isDuplicate = imageFiles.value.some(
+      (item) => item.file.name === file.name && item.file.size === file.size
+    )
+    if (!isDuplicate) {
+      imageFiles.value.push({ file, previewUrl: URL.createObjectURL(file) })
+    }
+  })
+  e.target.value = ''
+}
+
+function removeNewImage(index) {
+  URL.revokeObjectURL(imageFiles.value[index].previewUrl)
+  imageFiles.value.splice(index, 1)
 }
 
 function onVideoChange(e) {
-  videoFiles.value = Array.from(e.target.files)
+  const newFiles = Array.from(e.target.files)
+  newFiles.forEach((file) => {
+    const isDuplicate = videoFiles.value.some(
+      (item) => item.file.name === file.name && item.file.size === file.size
+    )
+    if (!isDuplicate) {
+      videoFiles.value.push({ file })
+    }
+  })
+  e.target.value = ''
+}
+
+function removeNewVideo(index) {
+  videoFiles.value.splice(index, 1)
 }
 
 async function handleSubmit() {
@@ -54,8 +102,10 @@ async function handleSubmit() {
   formData.append('title', form.value.title)
   formData.append('content', form.value.content)
   formData.append('store_location', form.value.store_location)
-  imageFiles.value.forEach((f) => formData.append('images', f))
-  videoFiles.value.forEach((f) => formData.append('videos', f))
+  imageIdsToDelete.value.forEach((id) => formData.append('delete_image_ids', id))
+  videoIdsToDelete.value.forEach((id) => formData.append('delete_video_ids', id))
+  imageFiles.value.forEach(({ file }) => formData.append('images', file))
+  videoFiles.value.forEach(({ file }) => formData.append('videos', file))
 
   isSaving.value = true
   errorMessage.value = ''
@@ -115,16 +165,92 @@ async function handleSubmit() {
         ></textarea>
       </div>
 
+      <!-- 이미지 섹션 -->
       <div class="store-form__field">
         <label class="store-form__label">이미지</label>
-        <input type="file" accept="image/*" multiple @change="onImageChange" />
-        <p v-if="imageFiles.length" class="store-form__hint">{{ imageFiles.length }}개 선택됨</p>
+
+        <!-- 기존 이미지 (수정 모드) -->
+        <div v-if="existingImages.length" class="media-section-label">등록된 이미지</div>
+        <div v-if="existingImages.length" class="media-grid">
+          <div
+            v-for="img in existingImages"
+            :key="img.id"
+            class="media-item"
+            :class="{ 'media-item--deleted': imageIdsToDelete.has(img.id) }"
+          >
+            <img :src="img.image_url" class="media-item__thumb" />
+            <button type="button" class="media-item__btn" @click="toggleDeleteImage(img.id)">
+              {{ imageIdsToDelete.has(img.id) ? '취소' : '삭제' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 새로 추가할 이미지 미리보기 -->
+        <div v-if="imageFiles.length" class="media-section-label">추가할 이미지</div>
+        <div v-if="imageFiles.length" class="media-grid">
+          <div v-for="(item, i) in imageFiles" :key="i" class="media-item">
+            <img :src="item.previewUrl" class="media-item__thumb" />
+            <button type="button" class="media-item__btn media-item__btn--remove" @click="removeNewImage(i)">
+              제거
+            </button>
+          </div>
+        </div>
+
+        <input
+          ref="imageInputRef"
+          type="file"
+          accept="image/*"
+          multiple
+          style="display: none"
+          @change="onImageChange"
+        />
+        <button type="button" class="add-file-btn" @click="imageInputRef.click()">
+          + 이미지 추가
+        </button>
       </div>
 
+      <!-- 동영상 섹션 -->
       <div class="store-form__field">
         <label class="store-form__label">동영상</label>
-        <input type="file" accept="video/*" multiple @change="onVideoChange" />
-        <p v-if="videoFiles.length" class="store-form__hint">{{ videoFiles.length }}개 선택됨</p>
+
+        <!-- 기존 영상 (수정 모드) -->
+        <div v-if="existingVideos.length" class="media-section-label">등록된 동영상</div>
+        <div v-if="existingVideos.length" class="media-grid">
+          <div
+            v-for="vid in existingVideos"
+            :key="vid.id"
+            class="media-item"
+            :class="{ 'media-item--deleted': videoIdsToDelete.has(vid.id) }"
+          >
+            <video :src="vid.video_url" class="media-item__thumb" preload="metadata" />
+            <button type="button" class="media-item__btn" @click="toggleDeleteVideo(vid.id)">
+              {{ videoIdsToDelete.has(vid.id) ? '취소' : '삭제' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- 새로 추가할 영상 목록 -->
+        <div v-if="videoFiles.length" class="media-section-label">추가할 동영상</div>
+        <ul v-if="videoFiles.length" class="video-list">
+          <li v-for="(item, i) in videoFiles" :key="i" class="video-list__item">
+            <span class="video-list__name">{{ item.file.name }}</span>
+            <button type="button" class="media-item__btn media-item__btn--remove video-list__remove" @click="removeNewVideo(i)">
+              제거
+            </button>
+          </li>
+        </ul>
+
+        <input
+          ref="videoInputRef"
+          type="file"
+          accept="video/*"
+          multiple
+          style="display: none"
+          @change="onVideoChange"
+        />
+        <button type="button" class="add-file-btn" @click="videoInputRef.click()">
+          + 동영상 추가
+        </button>
       </div>
 
       <div class="store-form__actions">
@@ -235,5 +361,97 @@ async function handleSubmit() {
   background: #f5f5f5;
   color: #888;
   cursor: not-allowed;
+}
+
+/* 미디어 그리드 */
+.media-section-label {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 4px;
+}
+.media-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.media-item {
+  position: relative;
+  width: 120px;
+}
+.media-item__thumb {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  display: block;
+}
+.media-item--deleted .media-item__thumb {
+  opacity: 0.35;
+}
+.media-item__btn {
+  margin-top: 4px;
+  width: 100%;
+  padding: 4px 0;
+  font-size: 0.78rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  color: #c0392b;
+}
+.media-item--deleted .media-item__btn {
+  color: #555;
+  background: #f5f5f5;
+}
+.media-item__btn--remove {
+  color: #888;
+}
+
+/* 동영상 파일 목록 */
+.video-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.video-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+.video-list__name {
+  flex: 1;
+  font-size: 0.88rem;
+  color: #555;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.video-list__remove {
+  width: auto;
+  padding: 3px 10px;
+  margin-top: 0;
+}
+
+/* 파일 추가 버튼 */
+.add-file-btn {
+  align-self: flex-start;
+  padding: 7px 16px;
+  font-size: 0.88rem;
+  border: 1px dashed #aaa;
+  border-radius: 6px;
+  background: #fafafa;
+  color: #555;
+  cursor: pointer;
+}
+.add-file-btn:hover {
+  background: #f0f0f0;
 }
 </style>

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 
-import { getMyRegions, normalizeApiError, updateMyRegions } from '@/api/accounts'
+import { getMyRegions, normalizeApiError, updateMyRegions, updateMyProfile, updateMyBusinessProfile } from '@/api/accounts'
 import { getMyApplications } from '@/api/community'
 import RegionSelector from '@/components/RegionSelector.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -20,6 +20,95 @@ const isSavingRegions = ref(false)
 
 const myApplications = ref([])
 const isLoadingApplications = ref(false)
+
+const isEditingProfile = ref(false)
+const isSavingProfile = ref(false)
+const editForm = ref({})
+const editErrors = ref({})
+const editFormError = ref('')
+
+function startEditingProfile() {
+  const p = profile.value || {}
+  editForm.value = {
+    real_name: p.real_name || '',
+    nickname: p.nickname || '',
+    phone: p.phone || '',
+    birth_date: p.birth_date || '',
+    gender: p.gender || 'N',
+  }
+  editErrors.value = {}
+  editFormError.value = ''
+  isEditingProfile.value = true
+}
+
+function cancelEditingProfile() {
+  isEditingProfile.value = false
+}
+
+const isEditingBusiness = ref(false)
+const isSavingBusiness = ref(false)
+const editBusinessForm = ref({})
+const editBusinessErrors = ref({})
+const editBusinessFormError = ref('')
+
+function startEditingBusiness() {
+  const bp = businessProfile.value || {}
+  editBusinessForm.value = {
+    business_contact_email: bp.business_contact_email || '',
+    business_name: bp.business_name || '',
+    business_number: bp.business_number || '',
+    business_phone: bp.business_phone || '',
+    owner_name: bp.owner_name || '',
+    address: bp.address || '',
+  }
+  editBusinessErrors.value = {}
+  editBusinessFormError.value = ''
+  isEditingBusiness.value = true
+}
+
+function cancelEditingBusiness() {
+  isEditingBusiness.value = false
+}
+
+async function saveBusinessProfile() {
+  if (isSavingBusiness.value) return
+  editBusinessErrors.value = {}
+  editBusinessFormError.value = ''
+  isSavingBusiness.value = true
+
+  try {
+    const data = await updateMyBusinessProfile(editBusinessForm.value)
+    authStore.user = data
+    isEditingBusiness.value = false
+  } catch (error) {
+    const normalized = normalizeApiError(error)
+    editBusinessErrors.value = normalized.fieldErrors
+    editBusinessFormError.value = normalized.message
+  } finally {
+    isSavingBusiness.value = false
+  }
+}
+
+async function saveProfile() {
+  if (isSavingProfile.value) return
+  editErrors.value = {}
+  editFormError.value = ''
+  isSavingProfile.value = true
+
+  try {
+    const payload = { ...editForm.value }
+    if (!payload.birth_date) payload.birth_date = null
+    const data = await updateMyProfile(payload)
+    authStore.user = data
+    isEditingProfile.value = false
+  } catch (error) {
+    const normalized = normalizeApiError(error)
+    editErrors.value = normalized.fieldErrors
+    editFormError.value = normalized.message
+  } finally {
+    isSavingProfile.value = false
+  }
+}
 
 const user = computed(() => authStore.user)
 const profile = computed(() => user.value?.profile || null)
@@ -176,59 +265,166 @@ onMounted(() => {
         </section>
 
         <section class="info-section">
-          <h2>프로필</h2>
-          <dl class="info-list">
-            <div>
-              <dt>실명</dt>
-              <dd>{{ displayValue(profile?.real_name) }}</dd>
-            </div>
-            <div>
-              <dt>닉네임</dt>
-              <dd>{{ displayValue(profile?.nickname) }}</dd>
-            </div>
-            <div>
-              <dt>전화번호</dt>
-              <dd>{{ displayValue(profile?.phone) }}</dd>
-            </div>
-            <div>
-              <dt>생년월일</dt>
-              <dd>{{ displayValue(profile?.birth_date) }}</dd>
-            </div>
-            <div>
-              <dt>성별</dt>
-              <dd>{{ formatGender(profile?.gender) }}</dd>
-            </div>
-          </dl>
+          <div class="section-header-row">
+            <h2>프로필</h2>
+            <button v-if="!isEditingProfile" class="button button--secondary button--sm" type="button" @click="startEditingProfile">
+              수정
+            </button>
+          </div>
+
+          <template v-if="!isEditingProfile">
+            <dl class="info-list">
+              <div>
+                <dt>실명</dt>
+                <dd>{{ displayValue(profile?.real_name) }}</dd>
+              </div>
+              <div>
+                <dt>닉네임</dt>
+                <dd>{{ displayValue(profile?.nickname) }}</dd>
+              </div>
+              <div>
+                <dt>전화번호</dt>
+                <dd>{{ displayValue(profile?.phone) }}</dd>
+              </div>
+              <div>
+                <dt>생년월일</dt>
+                <dd>{{ displayValue(profile?.birth_date) }}</dd>
+              </div>
+              <div>
+                <dt>성별</dt>
+                <dd>{{ formatGender(profile?.gender) }}</dd>
+              </div>
+            </dl>
+          </template>
+
+          <template v-else>
+            <form class="edit-form" @submit.prevent="saveProfile">
+              <div class="edit-field">
+                <label for="edit-real-name">실명</label>
+                <input id="edit-real-name" v-model="editForm.real_name" type="text" maxlength="30" />
+                <p v-if="editErrors.real_name" class="field-error">{{ editErrors.real_name[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-nickname">닉네임</label>
+                <input id="edit-nickname" v-model="editForm.nickname" type="text" maxlength="30" />
+                <p v-if="editErrors.nickname" class="field-error">{{ editErrors.nickname[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-phone">전화번호</label>
+                <input id="edit-phone" v-model="editForm.phone" type="tel" maxlength="20" />
+                <p v-if="editErrors.phone" class="field-error">{{ editErrors.phone[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-birth-date">생년월일</label>
+                <input id="edit-birth-date" v-model="editForm.birth_date" type="date" />
+                <p v-if="editErrors.birth_date" class="field-error">{{ editErrors.birth_date[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-gender">성별</label>
+                <select id="edit-gender" v-model="editForm.gender">
+                  <option value="N">선택 안 함</option>
+                  <option value="M">남성</option>
+                  <option value="F">여성</option>
+                </select>
+                <p v-if="editErrors.gender" class="field-error">{{ editErrors.gender[0] }}</p>
+              </div>
+
+              <p v-if="editFormError" class="alert alert--error">{{ editFormError }}</p>
+
+              <div class="form-actions form-actions--compact">
+                <button class="button button--primary" type="submit" :disabled="isSavingProfile">
+                  {{ isSavingProfile ? '저장 중' : '저장하기' }}
+                </button>
+                <button class="button button--secondary" type="button" :disabled="isSavingProfile" @click="cancelEditingProfile">
+                  취소
+                </button>
+              </div>
+            </form>
+          </template>
         </section>
 
         <section v-if="businessProfile" class="info-section">
-          <h2>사업자 정보</h2>
-          <dl class="info-list">
-            <div>
-              <dt>공개 연락 이메일</dt>
-              <dd>{{ displayValue(businessProfile.business_contact_email) }}</dd>
-            </div>
-            <div>
-              <dt>상호명</dt>
-              <dd>{{ displayValue(businessProfile.business_name) }}</dd>
-            </div>
-            <div>
-              <dt>사업자등록번호</dt>
-              <dd>{{ displayValue(businessProfile.business_number) }}</dd>
-            </div>
-            <div>
-              <dt>사업자 전화번호</dt>
-              <dd>{{ displayValue(businessProfile.business_phone) }}</dd>
-            </div>
-            <div>
-              <dt>대표자명</dt>
-              <dd>{{ displayValue(businessProfile.owner_name) }}</dd>
-            </div>
-            <div>
-              <dt>사업장 주소</dt>
-              <dd>{{ displayValue(businessProfile.address) }}</dd>
-            </div>
-          </dl>
+          <div class="section-header-row">
+            <h2>사업자 정보</h2>
+            <button v-if="!isEditingBusiness" class="button button--secondary button--sm" type="button" @click="startEditingBusiness">
+              수정
+            </button>
+          </div>
+
+          <template v-if="!isEditingBusiness">
+            <dl class="info-list">
+              <div>
+                <dt>공개 연락 이메일</dt>
+                <dd>{{ displayValue(businessProfile.business_contact_email) }}</dd>
+              </div>
+              <div>
+                <dt>상호명</dt>
+                <dd>{{ displayValue(businessProfile.business_name) }}</dd>
+              </div>
+              <div>
+                <dt>사업자등록번호</dt>
+                <dd>{{ displayValue(businessProfile.business_number) }}</dd>
+              </div>
+              <div>
+                <dt>사업자 전화번호</dt>
+                <dd>{{ displayValue(businessProfile.business_phone) }}</dd>
+              </div>
+              <div>
+                <dt>대표자명</dt>
+                <dd>{{ displayValue(businessProfile.owner_name) }}</dd>
+              </div>
+              <div>
+                <dt>사업장 주소</dt>
+                <dd>{{ displayValue(businessProfile.address) }}</dd>
+              </div>
+            </dl>
+          </template>
+
+          <template v-else>
+            <form class="edit-form" @submit.prevent="saveBusinessProfile">
+              <div class="edit-field">
+                <label for="edit-biz-email">공개 연락 이메일</label>
+                <input id="edit-biz-email" v-model="editBusinessForm.business_contact_email" type="email" />
+                <p v-if="editBusinessErrors.business_contact_email" class="field-error">{{ editBusinessErrors.business_contact_email[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-biz-name">상호명</label>
+                <input id="edit-biz-name" v-model="editBusinessForm.business_name" type="text" maxlength="100" />
+                <p v-if="editBusinessErrors.business_name" class="field-error">{{ editBusinessErrors.business_name[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-biz-number">사업자등록번호</label>
+                <input id="edit-biz-number" v-model="editBusinessForm.business_number" type="text" maxlength="30" />
+                <p v-if="editBusinessErrors.business_number" class="field-error">{{ editBusinessErrors.business_number[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-biz-phone">사업자 전화번호</label>
+                <input id="edit-biz-phone" v-model="editBusinessForm.business_phone" type="tel" maxlength="20" />
+                <p v-if="editBusinessErrors.business_phone" class="field-error">{{ editBusinessErrors.business_phone[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-biz-owner">대표자명</label>
+                <input id="edit-biz-owner" v-model="editBusinessForm.owner_name" type="text" maxlength="30" />
+                <p v-if="editBusinessErrors.owner_name" class="field-error">{{ editBusinessErrors.owner_name[0] }}</p>
+              </div>
+              <div class="edit-field">
+                <label for="edit-biz-address">사업장 주소</label>
+                <input id="edit-biz-address" v-model="editBusinessForm.address" type="text" maxlength="255" />
+                <p v-if="editBusinessErrors.address" class="field-error">{{ editBusinessErrors.address[0] }}</p>
+              </div>
+
+              <p v-if="editBusinessFormError" class="alert alert--error">{{ editBusinessFormError }}</p>
+
+              <div class="form-actions form-actions--compact">
+                <button class="button button--primary" type="submit" :disabled="isSavingBusiness">
+                  {{ isSavingBusiness ? '저장 중' : '저장하기' }}
+                </button>
+                <button class="button button--secondary" type="button" :disabled="isSavingBusiness" @click="cancelEditingBusiness">
+                  취소
+                </button>
+              </div>
+            </form>
+          </template>
         </section>
 
         <section v-if="profile?.user_type === 'normal'" class="info-section">
@@ -323,5 +519,60 @@ onMounted(() => {
   font-size: 0.85rem;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.section-header-row h2 {
+  margin: 0;
+}
+
+.button--sm {
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.edit-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.edit-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.edit-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.edit-field input,
+.edit-field select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-field input:focus,
+.edit-field select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.field-error {
+  margin: 0;
+  color: #c0392b;
+  font-size: 0.82rem;
 }
 </style>

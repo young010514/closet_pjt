@@ -253,6 +253,12 @@ const formattedTotalCount = computed(() =>
   numberFormatter.format(totalCount.value),
 )
 
+const selectedStore = computed(() =>
+  stores.value.find((s) => getStoreKey(s) === selectedStoreId.value) ?? null,
+)
+
+const latestPost = computed(() => storeLinkedPosts.value[0] ?? null)
+
 const pageCount = computed(() =>
   Math.max(1, Math.ceil(totalCount.value / (pageSize.value || 1))),
 )
@@ -1500,6 +1506,47 @@ onBeforeUnmount(() => {
                 지도를 움직이면 현재 보이는 영역을 기준으로 목록이 다시 갱신됩니다. 가게 카드를 누르면 해당
                 위치로 지도가 이동합니다.
               </p>
+
+              <div v-if="selectedStoreId" class="store-latest-post">
+                <p class="store-latest-post__heading">
+                  {{ selectedStore ? getStoreDisplayName(selectedStore) : '' }} 최신 게시글
+                </p>
+                <p v-if="isLoadingStorePosts" class="store-latest-post__status">불러오는 중...</p>
+                <p v-else-if="storeLinkedPostsError" class="store-latest-post__error">{{ storeLinkedPostsError }}</p>
+                <p v-else-if="!latestPost" class="store-latest-post__status">등록된 게시글이 없습니다.</p>
+                <div v-else class="store-latest-post__card">
+                  <div class="store-latest-post__top">
+                    <RouterLink :to="`/community/${latestPost.id}`" class="store-latest-post__title">
+                      {{ latestPost.title }}
+                    </RouterLink>
+                    <span class="store-latest-post__author">{{ latestPost.author_name }}</span>
+                  </div>
+                  <p v-if="latestPost.content" class="store-latest-post__content">{{ latestPost.content }}</p>
+                  <div v-if="latestPost.images && latestPost.images.length" class="store-latest-post__images">
+                    <img
+                      v-for="img in latestPost.images"
+                      :key="img.id"
+                      :src="img.image_url"
+                      :alt="latestPost.title"
+                      class="store-latest-post__image"
+                    />
+                  </div>
+                  <div v-if="latestPost.videos && latestPost.videos.length" class="store-latest-post__videos">
+                    <video
+                      v-for="vid in latestPost.videos"
+                      :key="vid.id"
+                      :src="vid.video_url"
+                      class="store-latest-post__video"
+                      controls
+                      preload="metadata"
+                    />
+                  </div>
+                  <div class="store-latest-post__footer">
+                    <span>조회 {{ numberFormatter.format(latestPost.view_count) }}</span>
+                    <span>좋아요 {{ numberFormatter.format(latestPost.like_count) }}</span>
+                  </div>
+                </div>
+              </div>
             </section>
           </div>
         </div>
@@ -1987,5 +2034,114 @@ onBeforeUnmount(() => {
   font-size: 0.85rem;
   color: #c0392b;
   margin: 0;
+}
+
+.store-latest-post {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  background: #f8faf9;
+  border: 1px solid #d4e8e2;
+  border-radius: 12px;
+}
+
+.store-latest-post__heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #2f7d6d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.75rem;
+}
+
+.store-latest-post__status {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+}
+
+.store-latest-post__error {
+  font-size: 0.85rem;
+  color: #c0392b;
+  margin: 0;
+}
+
+.store-latest-post__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.store-latest-post__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.store-latest-post__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.store-latest-post__title:hover {
+  text-decoration: underline;
+}
+
+.store-latest-post__author {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.store-latest-post__content {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #444;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.store-latest-post__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.store-latest-post__image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.store-latest-post__images .store-latest-post__image:not(:only-child) {
+  width: calc(50% - 0.25rem);
+}
+
+.store-latest-post__videos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.store-latest-post__video {
+  width: 100%;
+  border-radius: 8px;
+  background: #000;
+}
+
+.store-latest-post__footer {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #888;
+  padding-top: 0.4rem;
+  border-top: 1px solid #e0ede9;
 }
 </style>

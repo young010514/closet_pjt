@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
-import { getUserProfile, normalizeApiError } from '@/api/accounts'
+import { getUserProfile, getFollowers, getFollowing, normalizeApiError } from '@/api/accounts'
 import { getPosts } from '@/api/community'
 import FollowButton from '@/components/FollowButton.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -16,6 +16,11 @@ const isLoadingProfile = ref(false)
 const isLoadingPosts = ref(false)
 const profileError = ref('')
 const postsError = ref('')
+
+const modalType = ref(null)
+const modalUsers = ref([])
+const isLoadingModal = ref(false)
+const modalError = ref('')
 
 const BOARD_LABELS = {
   fashion: '패션',
@@ -102,6 +107,28 @@ function handleFollowChange(payload) {
   }
 }
 
+async function openModal(type) {
+  modalType.value = type
+  modalUsers.value = []
+  modalError.value = ''
+  isLoadingModal.value = true
+
+  try {
+    const fetchFn = type === 'followers' ? getFollowers : getFollowing
+    const data = await fetchFn(userId.value)
+    modalUsers.value = Array.isArray(data) ? data : (data.results ?? [])
+  } catch (error) {
+    const normalized = normalizeApiError(error)
+    modalError.value = normalized.message
+  } finally {
+    isLoadingModal.value = false
+  }
+}
+
+function closeModal() {
+  modalType.value = null
+}
+
 watch(userId, (value) => {
   loadProfile(value)
 }, { immediate: true })
@@ -124,6 +151,7 @@ watch(userId, (value) => {
             <p class="eyebrow">Public Profile</p>
             <h1>{{ displayName }}</h1>
             <p class="profile-username">{{ displayUsername }}</p>
+            <p v-if="profile.primary_region" class="profile-region">📍 {{ profile.primary_region }}</p>
           </div>
         </div>
 
@@ -142,14 +170,14 @@ watch(userId, (value) => {
         </div>
 
         <dl class="profile-stats" aria-label="프로필 요약">
-          <div class="profile-stat">
+          <button class="profile-stat profile-stat--clickable" type="button" @click="openModal('followers')">
             <dt>팔로워</dt>
             <dd>{{ formatCount(profile.follower_count) }}</dd>
-          </div>
-          <div class="profile-stat">
+          </button>
+          <button class="profile-stat profile-stat--clickable" type="button" @click="openModal('following')">
             <dt>팔로잉</dt>
             <dd>{{ formatCount(profile.following_count) }}</dd>
-          </div>
+          </button>
           <div class="profile-stat">
             <dt>게시글</dt>
             <dd>{{ formatCount(posts.length) }}</dd>
@@ -162,6 +190,39 @@ watch(userId, (value) => {
         <RouterLink class="button button--secondary" to="/community/fashion">커뮤니티로 돌아가기</RouterLink>
       </div>
     </section>
+
+    <Teleport to="body">
+      <div v-if="modalType" class="modal-backdrop" @click.self="closeModal">
+        <div class="modal" role="dialog" :aria-label="modalType === 'followers' ? '팔로워 목록' : '팔로잉 목록'">
+          <div class="modal-header">
+            <h2>{{ modalType === 'followers' ? '팔로워' : '팔로잉' }}</h2>
+            <button class="modal-close" type="button" aria-label="닫기" @click="closeModal">✕</button>
+          </div>
+          <div class="modal-body">
+            <p v-if="isLoadingModal" class="muted-text">불러오는 중입니다.</p>
+            <p v-else-if="modalError" class="alert alert--error">{{ modalError }}</p>
+            <p v-else-if="modalUsers.length === 0" class="muted-text">목록이 없습니다.</p>
+            <ul v-else class="modal-user-list">
+              <li v-for="user in modalUsers" :key="user.id" class="modal-user-item">
+                <RouterLink
+                  class="modal-user-link"
+                  :to="{ name: 'user-profile', params: { userId: user.id } }"
+                  @click="closeModal"
+                >
+                  <span class="modal-user-avatar" aria-hidden="true">
+                    {{ (user.nickname || user.username || '?').trim().charAt(0) }}
+                  </span>
+                  <span class="modal-user-info">
+                    <span class="modal-user-name">{{ user.nickname || user.username }}</span>
+                    <span class="modal-user-handle">@{{ user.username }}</span>
+                  </span>
+                </RouterLink>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </Teleport>
 
     <section v-if="profile" class="panel profile-posts">
       <div class="section-heading">
@@ -252,6 +313,13 @@ watch(userId, (value) => {
   font-weight: 700;
 }
 
+.profile-region {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .profile-hero__actions {
   display: flex;
   justify-content: flex-end;
@@ -268,6 +336,17 @@ watch(userId, (value) => {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid var(--color-border);
   border-radius: 12px;
+  text-align: left;
+}
+
+.profile-stat--clickable {
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.profile-stat--clickable:hover {
+  background: rgba(47, 125, 109, 0.08);
+  border-color: var(--color-accent);
 }
 
 .profile-stat dt {
@@ -280,6 +359,127 @@ watch(userId, (value) => {
   color: var(--color-heading);
   font-size: 1.45rem;
   font-weight: 900;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  width: min(440px, 92vw);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--color-heading);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+}
+
+.modal-close:hover {
+  color: var(--color-heading);
+  background: var(--color-surface-muted);
+}
+
+.modal-body {
+  overflow-y: auto;
+  padding: 0.75rem 0;
+  flex: 1;
+}
+
+.modal-user-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.modal-user-item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-user-item:last-child {
+  border-bottom: none;
+}
+
+.modal-user-link {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+}
+
+.modal-user-link:hover {
+  background: var(--color-surface-muted);
+}
+
+.modal-user-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 900;
+  border-radius: 12px;
+}
+
+.modal-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.modal-user-name {
+  font-weight: 700;
+  color: var(--color-heading);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-user-handle {
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .profile-posts {

@@ -407,6 +407,7 @@ class BusinessSignupSerializer(BaseSignupSerializer):
     business_number = serializers.CharField(max_length=30)
     business_phone = serializers.CharField(max_length=20)
     owner_name = serializers.CharField(max_length=30)
+    birth_date = serializers.DateField(required=False, allow_null=True)
 
     address = serializers.CharField(
         max_length=255,
@@ -420,7 +421,10 @@ class BusinessSignupSerializer(BaseSignupSerializer):
     def validate_business_contact_email(self, value):
         if not value:
             return ""
-        return normalize_account_email(value)
+        normalized = normalize_account_email(value)
+        if BusinessProfile.objects.filter(business_contact_email=normalized).exists():
+            raise serializers.ValidationError("이미 사용 중인 공개 연락 이메일입니다.")
+        return normalized
 
     def validate_nickname(self, value):
         nickname = value.strip()
@@ -429,6 +433,12 @@ class BusinessSignupSerializer(BaseSignupSerializer):
             raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
 
         return nickname
+
+    def validate_business_name(self, value):
+        name = value.strip()
+        if BusinessProfile.objects.filter(business_name=name).exists():
+            raise serializers.ValidationError("이미 사용 중인 상호명입니다.")
+        return name
 
     def validate_business_number(self, value):
         business_number = value.strip()
@@ -445,8 +455,22 @@ class BusinessSignupSerializer(BaseSignupSerializer):
 
         if UserProfile.objects.filter(phone=business_phone).exists():
             raise serializers.ValidationError("이미 등록된 전화번호입니다.")
+        if BusinessProfile.objects.filter(business_phone=business_phone).exists():
+            raise serializers.ValidationError("이미 사용 중인 사업자 전화번호입니다.")
 
         return business_phone
+
+    def validate_owner_name(self, value):
+        name = value.strip()
+        if BusinessProfile.objects.filter(owner_name=name).exists():
+            raise serializers.ValidationError("이미 사용 중인 대표자명입니다.")
+        return name
+
+    def validate_address(self, value):
+        address = value.strip()
+        if address and BusinessProfile.objects.filter(address=address).exists():
+            raise serializers.ValidationError("이미 등록된 사업장 주소입니다.")
+        return address
 
     @transaction.atomic
     def create(self, validated_data):
@@ -465,6 +489,7 @@ class BusinessSignupSerializer(BaseSignupSerializer):
         validated_data.pop("password_confirm", None)
 
         nickname = validated_data.pop("nickname")
+        birth_date = validated_data.pop("birth_date", None)
         business_contact_email = validated_data.pop(
             "business_contact_email"
         ) or email
@@ -490,6 +515,7 @@ class BusinessSignupSerializer(BaseSignupSerializer):
             real_name=business_profile_data["owner_name"],
             nickname=nickname,
             phone=business_profile_data["business_phone"],
+            birth_date=birth_date,
             gender=UserProfile.GENDER_UNSELECTED,
         )
 
@@ -505,6 +531,77 @@ class BusinessSignupSerializer(BaseSignupSerializer):
 
         save_user_regions(user, region_ids)
         return user
+
+
+class UpdateBusinessProfileSerializer(serializers.Serializer):
+    business_contact_email = serializers.EmailField(required=False, allow_blank=True)
+    business_name = serializers.CharField(max_length=100, required=False)
+    business_number = serializers.CharField(max_length=30, required=False)
+    business_phone = serializers.CharField(max_length=20, required=False)
+    owner_name = serializers.CharField(max_length=30, required=False)
+    address = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    def validate_business_contact_email(self, value):
+        if not value:
+            return ""
+        normalized = normalize_account_email(value)
+        user = get_request_user(self)
+        if BusinessProfile.objects.filter(business_contact_email=normalized).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 사용 중인 공개 연락 이메일입니다.")
+        return normalized
+
+    def validate_business_name(self, value):
+        name = value.strip()
+        user = get_request_user(self)
+        if BusinessProfile.objects.filter(business_name=name).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 사용 중인 상호명입니다.")
+        return name
+
+    def validate_business_number(self, value):
+        number = value.strip()
+        user = get_request_user(self)
+        if BusinessProfile.objects.filter(business_number=number).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 등록된 사업자번호입니다.")
+        return number
+
+    def validate_business_phone(self, value):
+        phone = value.strip()
+        user = get_request_user(self)
+        if UserProfile.objects.filter(phone=phone).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 등록된 전화번호입니다.")
+        if BusinessProfile.objects.filter(business_phone=phone).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 사용 중인 사업자 전화번호입니다.")
+        return phone
+
+    def validate_owner_name(self, value):
+        name = value.strip()
+        user = get_request_user(self)
+        if BusinessProfile.objects.filter(owner_name=name).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 사용 중인 대표자명입니다.")
+        return name
+
+    def validate_address(self, value):
+        address = value.strip()
+        user = get_request_user(self)
+        if address and BusinessProfile.objects.filter(address=address).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 등록된 사업장 주소입니다.")
+        return address
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save(update_fields=list(validated_data.keys()))
+
+        # business_phone과 owner_name은 UserProfile과 동기화
+        user_profile_fields = {}
+        if "business_phone" in validated_data:
+            user_profile_fields["phone"] = validated_data["business_phone"]
+        if "owner_name" in validated_data:
+            user_profile_fields["real_name"] = validated_data["owner_name"]
+        if user_profile_fields:
+            UserProfile.objects.filter(user=instance.user).update(**user_profile_fields)
+
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
@@ -558,6 +655,7 @@ def get_following_ids_from_context(serializer):
 class PublicUserSerializer(serializers.ModelSerializer):
     nickname = serializers.SerializerMethodField()
     profile_image = serializers.SerializerMethodField()
+    primary_region = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
     following_count = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
@@ -569,6 +667,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
             "username",
             "nickname",
             "profile_image",
+            "primary_region",
             "follower_count",
             "following_count",
             "is_following",
@@ -583,6 +682,12 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
     def get_profile_image(self, user):
         return None
+
+    def get_primary_region(self, user):
+        ur = user.selected_regions.select_related("region").filter(priority=1).first()
+        if ur is None:
+            return None
+        return str(ur.region)
 
     def get_follower_count(self, user):
         annotated_count = getattr(user, "follower_count", None)
@@ -603,6 +708,34 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
         following_ids = get_following_ids_from_context(self)
         return user.id in following_ids
+
+
+class UpdateProfileSerializer(serializers.Serializer):
+    real_name = serializers.CharField(max_length=30, required=False)
+    nickname = serializers.CharField(max_length=30, required=False)
+    phone = serializers.CharField(max_length=20, required=False)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    gender = serializers.ChoiceField(choices=UserProfile.GENDER_CHOICES, required=False)
+
+    def validate_nickname(self, value):
+        nickname = value.strip()
+        user = get_request_user(self)
+        if UserProfile.objects.filter(nickname=nickname).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 사용 중인 닉네임입니다.")
+        return nickname
+
+    def validate_phone(self, value):
+        phone = value.strip()
+        user = get_request_user(self)
+        if UserProfile.objects.filter(phone=phone).exclude(user=user).exists():
+            raise serializers.ValidationError("이미 등록된 전화번호입니다.")
+        return phone
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save(update_fields=list(validated_data.keys()))
+        return instance
 
 
 class BusinessProfileDetailSerializer(serializers.ModelSerializer):
