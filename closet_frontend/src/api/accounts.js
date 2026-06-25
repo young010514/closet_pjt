@@ -48,6 +48,18 @@ export async function searchUsers(params) {
   return response.data
 }
 
+export async function updateMyProfile(payload) {
+  await initializeCsrf()
+  const response = await api.patch(`${ACCOUNT_BASE}/me/profile/`, payload)
+  return response.data
+}
+
+export async function updateMyBusinessProfile(payload) {
+  await initializeCsrf()
+  const response = await api.patch(`${ACCOUNT_BASE}/me/business-profile/`, payload)
+  return response.data
+}
+
 export async function getMyRegions() {
   const response = await api.get(`${ACCOUNT_BASE}/me/regions/`)
   return response.data

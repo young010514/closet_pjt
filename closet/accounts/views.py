@@ -29,6 +29,8 @@ from .serializers import (
     NormalSignupSerializer,
     PublicUserSerializer,
     SelectedRegionSerializer,
+    UpdateBusinessProfileSerializer,
+    UpdateProfileSerializer,
     UserRegionReorderSerializer,
 )
 from .models import Follow
@@ -173,6 +175,44 @@ def logout_view(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def mypage(request):
+    return Response(
+        CurrentUserSerializer(request.user, context={"request": request}).data,
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+@csrf_protect
+def update_profile(request):
+    try:
+        profile = request.user.profile
+    except Exception:
+        return Response({"detail": "프로필이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UpdateProfileSerializer(data=request.data, context={"request": request})
+    serializer.is_valid(raise_exception=True)
+    serializer.update(profile, serializer.validated_data)
+
+    return Response(
+        CurrentUserSerializer(request.user, context={"request": request}).data,
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+@csrf_protect
+def update_business_profile(request):
+    try:
+        business_profile = request.user.business_profile
+    except Exception:
+        return Response({"detail": "사업자 프로필이 존재하지 않습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = UpdateBusinessProfileSerializer(data=request.data, context={"request": request})
+    serializer.is_valid(raise_exception=True)
+    serializer.update(business_profile, serializer.validated_data)
+
     return Response(
         CurrentUserSerializer(request.user, context={"request": request}).data,
         status=status.HTTP_200_OK,
