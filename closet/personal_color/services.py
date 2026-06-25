@@ -28,7 +28,15 @@ GMS_PERSONAL_COLOR_JSON_PROMPT = (
     "confidence must be a number from 0 to 100. "
     "best_colors must be an array of 5 strings. "
     "worst_colors must be an array of 5 strings. "
-    "recommendations must be an array of 3 strings."
+    "recommendations must be an object with keys: clothing, makeup, accessories. "
+    "recommendations.clothing must be an array of 3 Korean strings for clothing styles and colors. "
+    "recommendations.makeup must be an array of 3 Korean strings for makeup colors and tones. "
+    "recommendations.accessories must be an array of 3 Korean strings for accessories, jewelry, or styling items. "
+    'Return this exact JSON shape: {"result_type":"spring_warm","confidence":90,'
+    '"summary":"string","best_colors":["string"],"worst_colors":["string"],'
+    '"recommendations":{"clothing":["string","string","string"],'
+    '"makeup":["string","string","string"],'
+    '"accessories":["string","string","string"]}}'
 )
 
 ALLOWED_IMAGE_MIME_TYPES = frozenset(
