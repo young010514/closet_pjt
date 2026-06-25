@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import transaction
@@ -53,6 +54,8 @@ MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
 MIN_IMAGE_DIMENSION = 256
 MAX_IMAGE_DIMENSION = 4096
 
+DEFAULT_MAX_COMPLETION_TOKENS = 500
+
 RESULT_TYPE_ORDER = [
     PersonalColorAnalysis.ResultType.SPRING_WARM,
     PersonalColorAnalysis.ResultType.SUMMER_COOL,
@@ -60,10 +63,179 @@ RESULT_TYPE_ORDER = [
     PersonalColorAnalysis.ResultType.WINTER_COOL,
 ]
 
+
+def color_item(name: str, hex_value: str, reason: str) -> dict[str, str]:
+    return {
+        "name": name,
+        "hex": hex_value,
+        "reason": reason,
+    }
+
+
+SEASON_PRESETS: dict[str, dict[str, Any]] = {
+    PersonalColorAnalysis.ResultType.SPRING_WARM: {
+        "label": "봄 웜톤",
+        "subtypes": ["라이트", "브라이트", "코랄", "피치"],
+        "summary": "맑고 따뜻한 색감이 얼굴을 생기 있게 살려 줍니다.",
+        "best_colors": [
+            color_item("코랄 핑크", "#F49A8A", "얼굴빛을 건강하고 화사하게 보여 줍니다."),
+            color_item("버터 옐로", "#F6D86B", "밝고 부드러운 인상을 만듭니다."),
+            color_item("민트", "#CDE8C8", "산뜻하고 깨끗한 분위기를 더합니다."),
+            color_item("아쿠아", "#A6D8D4", "맑은 느낌을 유지하면서 생기를 줍니다."),
+        ],
+        "avoid_colors": [
+            color_item("쿨 그레이", "#718096", "얼굴빛이 다소 칙칙해 보일 수 있습니다."),
+            color_item("딥 네이비", "#233554", "무거운 느낌이 강해질 수 있습니다."),
+            color_item("와인", "#7A2E3A", "따뜻한 봄 느낌을 덜어낼 수 있습니다."),
+        ],
+        "recommendations": {
+            "clothing": [
+                "아이보리 톱",
+                "연한 베이지 니트",
+                "코랄 포인트 블라우스",
+            ],
+            "makeup": [
+                "코랄 블러셔",
+                "피치 립",
+                "가벼운 글로우 베이스",
+            ],
+            "accessories": [
+                "골드 액세서리",
+                "투명 프레임 안경",
+                "진주 포인트",
+            ],
+        },
+        "analysis_metrics": {
+            "warmth": 0.82,
+            "brightness": 0.78,
+            "saturation": 0.66,
+            "contrast": 0.52,
+        },
+    },
+    PersonalColorAnalysis.ResultType.SUMMER_COOL: {
+        "label": "여름 쿨톤",
+        "subtypes": ["라이트", "소프트", "뮤트", "쿨"],
+        "summary": "차분하고 부드러운 색감이 얼굴을 더 맑아 보이게 합니다.",
+        "best_colors": [
+            color_item("라벤더", "#C8B5F5", "부드럽고 우아한 분위기를 살려 줍니다."),
+            color_item("소프트 블루", "#8EA4C8", "청량한 인상을 유지해 줍니다."),
+            color_item("로즈 핑크", "#E6A7B5", "자연스럽고 생기 있는 느낌을 줍니다."),
+            color_item("미스트 그레이", "#B8BFC9", "부담 없이 정돈된 느낌을 줍니다."),
+        ],
+        "avoid_colors": [
+            color_item("오렌지", "#F58B64", "과한 온기로 대비가 강해질 수 있습니다."),
+            color_item("머스타드", "#D9A441", "부드러운 인상이 깨질 수 있습니다."),
+            color_item("올리브", "#687A3D", "탁해 보일 가능성이 있습니다."),
+        ],
+        "recommendations": {
+            "clothing": [
+                "라이트 블루 셔츠",
+                "은은한 그레이 재킷",
+                "소프트 핑크 니트",
+            ],
+            "makeup": [
+                "쿨 로즈 블러셔",
+                "맑은 립 틴트",
+                "소프트 매트 베이스",
+            ],
+            "accessories": [
+                "실버 액세서리",
+                "얇은 메탈 프레임",
+                "유리 같은 광택 포인트",
+            ],
+        },
+        "analysis_metrics": {
+            "warmth": 0.28,
+            "brightness": 0.74,
+            "saturation": 0.48,
+            "contrast": 0.36,
+        },
+    },
+    PersonalColorAnalysis.ResultType.AUTUMN_WARM: {
+        "label": "가을 웜톤",
+        "subtypes": ["뮤트", "딥", "소프트", "웜"],
+        "summary": "깊고 안정적인 색감이 얼굴에 자연스러운 분위기를 더합니다.",
+        "best_colors": [
+            color_item("테라코타", "#C76A4A", "따뜻하고 성숙한 분위기를 살려 줍니다."),
+            color_item("카멜", "#C19A6B", "고급스럽고 안정적인 느낌을 줍니다."),
+            color_item("올리브", "#6F7B3B", "자연스럽고 깊이 있는 인상을 만듭니다."),
+            color_item("베이지", "#D8B58B", "부드럽고 편안한 분위기를 유지합니다."),
+        ],
+        "avoid_colors": [
+            color_item("파스텔 핑크", "#F5C2D7", "얼굴이 붕 떠 보일 수 있습니다."),
+            color_item("코발트 블루", "#2E58B8", "강한 차가움이 대비를 키울 수 있습니다."),
+            color_item("쿨 그레이", "#C0C7D1", "따뜻한 기운이 약해질 수 있습니다."),
+        ],
+        "recommendations": {
+            "clothing": [
+                "브라운 계열 코트",
+                "머스타드 니트",
+                "올리브 셔츠",
+            ],
+            "makeup": [
+                "브론즈 메이크업",
+                "코랄 브라운 립",
+                "음영감 있는 아이 메이크업",
+            ],
+            "accessories": [
+                "골드 액세서리",
+                "가죽 소재 포인트",
+                "우드 톤 아이템",
+            ],
+        },
+        "analysis_metrics": {
+            "warmth": 0.78,
+            "brightness": 0.48,
+            "saturation": 0.58,
+            "contrast": 0.62,
+        },
+    },
+    PersonalColorAnalysis.ResultType.WINTER_COOL: {
+        "label": "겨울 쿨톤",
+        "subtypes": ["비비드", "딥", "브라이트", "클리어"],
+        "summary": "선명하고 대비가 있는 색이 얼굴을 또렷하고 시원하게 보이게 합니다.",
+        "best_colors": [
+            color_item("코발트 블루", "#2D5BFF", "선명하고 또렷한 인상을 강조합니다."),
+            color_item("마젠타", "#D63B9B", "강렬하고 세련된 분위기를 더합니다."),
+            color_item("퓨어 화이트", "#FFFFFF", "전체 인상을 맑고 깨끗하게 정리합니다."),
+            color_item("차콜", "#2F343F", "강한 대비를 안정적으로 받쳐 줍니다."),
+        ],
+        "avoid_colors": [
+            color_item("피치", "#F7B18A", "선명한 대비가 흐려질 수 있습니다."),
+            color_item("올리브", "#76824A", "탁하고 무거워 보일 수 있습니다."),
+            color_item("베이지", "#B98F6B", "입체감이 줄어들 수 있습니다."),
+        ],
+        "recommendations": {
+            "clothing": [
+                "블랙 앤 화이트 조합",
+                "강한 블루 재킷",
+                "선명한 컬러 포인트 셔츠",
+            ],
+            "makeup": [
+                "맑은 레드 립",
+                "선명한 아이라인",
+                "차가운 톤의 하이라이트",
+            ],
+            "accessories": [
+                "실버 액세서리",
+                "광택 있는 메탈 포인트",
+                "미니멀한 블랙 아이템",
+            ],
+        },
+        "analysis_metrics": {
+            "warmth": 0.22,
+            "brightness": 0.58,
+            "saturation": 0.78,
+            "contrast": 0.74,
+        },
+    },
+}
+
+
 GMS_PERSONAL_COLOR_PROMPT = """
-Analyze the uploaded face image for personal color styling.
-Return only one JSON object. Do not wrap it in markdown.
-Use Korean text for summaries, color names, reasons, and recommendations.
+Analyze the provided face image for personal color recommendation.
+Return only one JSON object. Do not wrap it in markdown or code fences.
+Use Korean text for summary, color names, reasons, and recommendations.
 The JSON schema must be:
 {
   "result_type": "spring_warm | summer_cool | autumn_warm | winter_cool",
@@ -84,183 +256,8 @@ The JSON schema must be:
     "contrast": 0-1
   }
 }
+If you are uncertain, keep the JSON valid and choose the closest single season.
 """.strip()
-
-
-def color_item(name: str, hex_value: str, reason: str) -> dict[str, str]:
-    return {
-        "name": name,
-        "hex": hex_value,
-        "reason": reason,
-    }
-
-
-SEASON_CONFIGS: dict[str, dict[str, Any]] = {
-    PersonalColorAnalysis.ResultType.SPRING_WARM: {
-        "subtypes": ["브라이트", "라이트", "클리어", "트루"],
-        "summary": (
-            "밝고 맑은 색이 얼굴에 생기를 더합니다. "
-            "{subtype} 계열의 산뜻한 톤이 특히 잘 어울립니다."
-        ),
-        "best_colors": [
-            color_item("피치 코랄", "#F49A8A", "얼굴에 생기를 더해 주는 따뜻한 색상입니다."),
-            color_item("웜 옐로우", "#F6D86B", "부드러운 밝기를 살려 화사해 보이게 합니다."),
-            color_item("라이트 민트", "#CDE8C8", "깨끗하고 산뜻한 인상을 강조합니다."),
-            color_item("아쿠아 샌드", "#A6D8D4", "맑은 피부 톤과 조화를 이루기 좋습니다."),
-        ],
-        "avoid_colors": [
-            color_item("차가운 블루 그레이", "#718096", "안색이 다소 창백해 보일 수 있습니다."),
-            color_item("딥 네이비", "#233554", "무게감이 강해 생기가 묻힐 수 있습니다."),
-            color_item("진한 와인", "#7A2E3A", "피부 톤의 밝고 따뜻한 느낌을 약하게 만듭니다."),
-        ],
-        "recommendations": {
-            "clothing": [
-                "아이보리 셔츠",
-                "살구·코랄 상의",
-                "가벼운 트위드 재킷",
-            ],
-            "makeup": [
-                "피치 블러셔",
-                "코랄 립",
-                "맑은 피부 표현 중심의 베이스",
-            ],
-            "accessories": [
-                "골드 톤 액세서리",
-                "진주 포인트",
-                "투명 또는 가벼운 프레임 안경",
-            ],
-        },
-        "metrics": {
-            "warmth": (0.82, 0.08),
-            "brightness": (0.78, 0.1),
-            "saturation": (0.66, 0.1),
-            "contrast": (0.52, 0.08),
-        },
-    },
-    PersonalColorAnalysis.ResultType.SUMMER_COOL: {
-        "subtypes": ["라이트", "소프트", "뮤트", "쿨"],
-        "summary": (
-            "차분하고 부드러운 색이 잘 어울립니다. "
-            "{subtype} 감도의 색감이 얼굴을 편안하게 보이게 합니다."
-        ),
-        "best_colors": [
-            color_item("라벤더", "#C8B5F5", "피부의 맑고 부드러운 느낌을 살려 줍니다."),
-            color_item("더스티 블루", "#8EA4C8", "차분한 분위기와 안정감을 더합니다."),
-            color_item("로즈 핑크", "#E6A7B5", "자연스러운 생기와 부드러운 인상을 줍니다."),
-            color_item("소프트 그레이", "#B8BFC9", "과하지 않게 전체 톤을 정리해 줍니다."),
-        ],
-        "avoid_colors": [
-            color_item("오렌지 코랄", "#F58B64", "따뜻한 기운이 강해 대비가 생길 수 있습니다."),
-            color_item("머스터드", "#D9A441", "피부의 맑은 느낌이 둔해질 수 있습니다."),
-            color_item("올리브", "#687A3D", "탁한 인상을 강하게 만들 수 있습니다."),
-        ],
-        "recommendations": {
-            "clothing": [
-                "라이트 그레이 니트",
-                "블루 계열 셔츠",
-                "차분한 로맨틱 무드의 원피스",
-            ],
-            "makeup": [
-                "쿨 로즈 블러셔",
-                "투명감 있는 립",
-                "소프트 매트 피부 표현",
-            ],
-            "accessories": [
-                "실버 톤 액세서리",
-                "얇은 메탈 프레임 안경",
-                "과하지 않은 미니멀 장식",
-            ],
-        },
-        "metrics": {
-            "warmth": (0.28, 0.08),
-            "brightness": (0.74, 0.08),
-            "saturation": (0.48, 0.08),
-            "contrast": (0.36, 0.08),
-        },
-    },
-    PersonalColorAnalysis.ResultType.AUTUMN_WARM: {
-        "subtypes": ["뮤트", "딥", "소프트", "웜"],
-        "summary": (
-            "깊고 따뜻한 색이 안정적인 인상을 만듭니다. "
-            "{subtype}한 톤의 자연스러운 색감이 잘 어울립니다."
-        ),
-        "best_colors": [
-            color_item("테라코타", "#C76A4A", "피부의 깊이감을 자연스럽게 살려 줍니다."),
-            color_item("카멜", "#C19A6B", "부드럽고 고급스러운 분위기를 만듭니다."),
-            color_item("올리브", "#6F7B3B", "자연스럽고 안정감 있는 인상을 줍니다."),
-            color_item("딥 베이지", "#D8B58B", "따뜻한 무드를 편안하게 연결합니다."),
-        ],
-        "avoid_colors": [
-            color_item("이시 핑크", "#F5C2D7", "색감이 떠 보일 수 있습니다."),
-            color_item("코발트 블루", "#2E58B8", "차가운 대비가 강하게 느껴질 수 있습니다."),
-            color_item("실버 그레이", "#C0C7D1", "따뜻한 질감이 약해질 수 있습니다."),
-        ],
-        "recommendations": {
-            "clothing": [
-                "브라운 계열 코트",
-                "울 소재 니트",
-                "오렌지 브릭 톤 상의",
-            ],
-            "makeup": [
-                "브론즈 아이 메이크업",
-                "코랄 브라운 립",
-                "선명하지만 부드러운 음영",
-            ],
-            "accessories": [
-                "골드 액세서리",
-                "가죽 소재 포인트",
-                "따뜻한 우드 톤 소품",
-            ],
-        },
-        "metrics": {
-            "warmth": (0.78, 0.08),
-            "brightness": (0.48, 0.08),
-            "saturation": (0.58, 0.08),
-            "contrast": (0.62, 0.08),
-        },
-    },
-    PersonalColorAnalysis.ResultType.WINTER_COOL: {
-        "subtypes": ["비비드", "딥", "클리어", "트루"],
-        "summary": (
-            "선명하고 또렷한 색이 얼굴을 깨끗하게 살려 줍니다. "
-            "{subtype}한 대비감이 인상을 선명하게 보여 줍니다."
-        ),
-        "best_colors": [
-            color_item("코발트 블루", "#2D5BFF", "깨끗하고 선명한 인상을 강조합니다."),
-            color_item("마젠타", "#D63B9B", "생동감과 세련된 대비를 더합니다."),
-            color_item("퓨어 화이트", "#FFFFFF", "전체 분위기를 가장 또렷하게 정리합니다."),
-            color_item("차콜", "#2F343F", "강한 대비를 받쳐 주는 안정적인 색상입니다."),
-        ],
-        "avoid_colors": [
-            color_item("피치", "#F7B18A", "따뜻한 기운이 강해 선명함이 약해질 수 있습니다."),
-            color_item("올리브", "#76824A", "탁해 보이거나 무거워 보일 수 있습니다."),
-            color_item("캠엘", "#B98F6B", "톤이 흐려지고 또렷함이 줄어들 수 있습니다."),
-        ],
-        "recommendations": {
-            "clothing": [
-                "블랙·화이트 대비 코디",
-                "선명한 블루 계열 재킷",
-                "미니멀하고 구조적인 실루엣",
-            ],
-            "makeup": [
-                "맑은 레드 립",
-                "또렷한 아이라인",
-                "채도 있는 블러셔 포인트",
-            ],
-            "accessories": [
-                "실버 액세서리",
-                "광택감 있는 메탈 소재",
-                "미니멀한 직선형 디자인",
-            ],
-        },
-        "metrics": {
-            "warmth": (0.22, 0.08),
-            "brightness": (0.58, 0.08),
-            "saturation": (0.78, 0.08),
-            "contrast": (0.74, 0.08),
-        },
-    },
-}
 
 
 @dataclass(frozen=True)
@@ -287,38 +284,6 @@ class PersonalColorProvider:
         return None
 
 
-class MockPersonalColorProvider(PersonalColorProvider):
-    name = "mock"
-    model_version = "mock-v1"
-
-    def analyze(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
-        seed = int(prepared_image.sha256_hex, 16)
-        rng = random.Random(seed)
-        result_type = RESULT_TYPE_ORDER[seed % len(RESULT_TYPE_ORDER)]
-        config = SEASON_CONFIGS[result_type]
-        subtype = rng.choice(config["subtypes"])
-
-        best_colors = [dict(item) for item in config["best_colors"]]
-        avoid_colors = [dict(item) for item in config["avoid_colors"]]
-        rng.shuffle(best_colors)
-        rng.shuffle(avoid_colors)
-
-        return {
-            "result_type": result_type,
-            "result_subtype": subtype,
-            "confidence": round(78 + rng.random() * 18, 2),
-            "summary": config["summary"].format(subtype=subtype),
-            "best_colors": best_colors,
-            "avoid_colors": avoid_colors,
-            "recommendations": {
-                key: list(value)
-                for key, value in config["recommendations"].items()
-            },
-            "analysis_metrics": _build_metrics(result_type, seed),
-            "provider_name": self.name,
-            "model_version": self.model_version,
-        }
-
 def _get_setting(name: str, default: Any = "") -> Any:
     value = getattr(settings, name, None)
     if value not in (None, ""):
@@ -326,311 +291,15 @@ def _get_setting(name: str, default: Any = "") -> Any:
     return os.getenv(name, default)
 
 
-def _get_gms_timeout() -> float:
+def _env_float(name: str, default: float) -> float:
     try:
-        timeout = float(_get_setting("GMS_TIMEOUT_SECONDS", 30.0))
+        return float(_get_setting(name, default))
     except (TypeError, ValueError):
-        timeout = 30.0
-    return max(timeout, 1.0)
+        return default
 
 
-def _strip_json_markdown(value: str) -> str:
-    text = value.strip()
-    if not text.startswith("```"):
-        return text
-
-    lines = text.splitlines()
-    if lines and lines[0].strip().startswith("```"):
-        lines = lines[1:]
-    if lines and lines[-1].strip().startswith("```"):
-        lines = lines[:-1]
-    return "\n".join(lines).strip()
-
-
-def _parse_json_text(value: str) -> Any:
-    try:
-        return json.loads(_strip_json_markdown(value))
-    except json.JSONDecodeError as exc:
-        raise AnalysisFailedError(
-            "GMS analysis result was not valid JSON.",
-            code="analysis_result_invalid",
-        ) from exc
-
-
-def _extract_gms_result(value: Any) -> Any:
-    if isinstance(value, str):
-        return _extract_gms_result(_parse_json_text(value))
-
-    if not isinstance(value, dict):
-        return value
-
-    if any(
-        key in value
-        for key in (
-            "result_type",
-            "resultType",
-            "season",
-            "personal_color",
-            "personalColor",
-        )
-    ):
-        return value
-
-    choices = value.get("choices")
-    if isinstance(choices, list) and choices:
-        first_choice = choices[0]
-        if isinstance(first_choice, dict):
-            message = first_choice.get("message")
-            if isinstance(message, dict) and "content" in message:
-                return _extract_gms_result(message["content"])
-            for key in ("content", "text"):
-                if key in first_choice:
-                    return _extract_gms_result(first_choice[key])
-
-    candidates = []
-    for key in ("result", "analysis", "data", "output", "content", "text"):
-        if key in value:
-            candidates.append(value[key])
-
-    for candidate in candidates:
-        if isinstance(candidate, (dict, str)):
-            extracted = _extract_gms_result(candidate)
-            if extracted is not candidate or isinstance(extracted, dict):
-                return extracted
-
-    return value
-
-
-def _normalize_result_type_alias(value: Any) -> str:
-    normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
-    if normalized in RESULT_TYPE_ORDER:
-        return normalized
-    if "spring" in normalized:
-        return PersonalColorAnalysis.ResultType.SPRING_WARM
-    if "summer" in normalized:
-        return PersonalColorAnalysis.ResultType.SUMMER_COOL
-    if "autumn" in normalized or "fall" in normalized:
-        return PersonalColorAnalysis.ResultType.AUTUMN_WARM
-    if "winter" in normalized:
-        return PersonalColorAnalysis.ResultType.WINTER_COOL
-    return str(value).strip()
-
-
-def _normalize_gms_result_shape(
-    value: Any,
-    *,
-    provider_name: str,
-    model_version: str,
-) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise AnalysisFailedError(
-            "GMS analysis result format was invalid.",
-            code="analysis_result_invalid",
-        )
-
-    result = dict(value)
-    aliases = {
-        "resultType": "result_type",
-        "resultSubtype": "result_subtype",
-        "subtype": "result_subtype",
-        "bestColors": "best_colors",
-        "avoidColors": "avoid_colors",
-        "analysisMetrics": "analysis_metrics",
-        "metrics": "analysis_metrics",
-        "providerName": "provider_name",
-        "modelVersion": "model_version",
-    }
-    for source, target in aliases.items():
-        if source in result and target not in result:
-            result[target] = result[source]
-
-    for source in ("season", "personal_color", "personalColor"):
-        if source in result and "result_type" not in result:
-            result["result_type"] = result[source]
-
-    if "result_type" in result:
-        result["result_type"] = _normalize_result_type_alias(result["result_type"])
-
-    confidence = result.get("confidence")
-    if isinstance(confidence, (int, float)) and 0 <= confidence <= 1:
-        result["confidence"] = round(confidence * 100, 2)
-
-    result.setdefault("provider_name", provider_name)
-    result.setdefault("model_version", model_version)
-    return result
-
-
-class GmsPersonalColorProvider(PersonalColorProvider):
-    name = "gms"
-
-    def __init__(
-        self,
-        *,
-        api_url: str | None = None,
-        api_key: str | None = None,
-        model: str | None = None,
-        api_style: str | None = None,
-        timeout: float | None = None,
-    ):
-        self.api_url = (api_url or str(_get_setting("GMS_API_URL", ""))).strip()
-        self.api_key = (api_key or str(_get_setting("GMS_API_KEY", ""))).strip()
-        self.model = (model or str(_get_setting("GMS_MODEL", ""))).strip()
-        self.api_style = (
-            api_style or str(_get_setting("GMS_API_STYLE", "openai")) or "openai"
-        ).strip().lower()
-        self.timeout = timeout or _get_gms_timeout()
-        self.model_version = self.model or "gms"
-
-        if not self.api_url or not self.api_key:
-            raise AnalysisProviderUnavailableError(
-                "GMS API configuration is missing.",
-                code="analysis_provider_unavailable",
-            )
-
-    def analyze(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
-        request = urllib.request.Request(
-            self.api_url,
-            data=json.dumps(
-                self._build_payload(prepared_image),
-                ensure_ascii=False,
-            ).encode("utf-8"),
-            headers=self._build_headers(),
-            method="POST",
-        )
-
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                response_body = response.read()
-        except urllib.error.HTTPError as exc:
-            self._raise_for_http_error(exc)
-        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
-            raise AnalysisProviderUnavailableError(
-                "GMS API request failed.",
-                code="analysis_provider_unavailable",
-            ) from exc
-
-        try:
-            response_json = json.loads(response_body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise AnalysisFailedError(
-                "GMS API response was not valid JSON.",
-                code="analysis_result_invalid",
-            ) from exc
-
-        extracted = _extract_gms_result(response_json)
-        return _normalize_gms_result_shape(
-            extracted,
-            provider_name=self.name,
-            model_version=self.model_version,
-        )
-
-    def _build_headers(self) -> dict[str, str]:
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-        key_header = str(_get_setting("GMS_API_KEY_HEADER", "Authorization")).strip()
-        auth_prefix = str(_get_setting("GMS_API_AUTH_PREFIX", "Bearer")).strip()
-        if key_header:
-            value = self.api_key
-            if key_header.lower() == "authorization" and auth_prefix:
-                value = f"{auth_prefix} {self.api_key}"
-            headers[key_header] = value
-        return headers
-
-    def _build_payload(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
-        image_base64 = base64.b64encode(prepared_image.normalized_bytes).decode("ascii")
-
-        if self.api_style == "gemini":
-            return {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": GMS_PERSONAL_COLOR_PROMPT},
-                            {
-                                "inline_data": {
-                                    "mime_type": "image/png",
-                                    "data": image_base64,
-                                }
-                            },
-                        ]
-                    }
-                ],
-                "generationConfig": {
-                    "temperature": 0.2,
-                    "responseMimeType": "application/json",
-                },
-            }
-
-        if self.api_style == "raw":
-            payload = {
-                "prompt": GMS_PERSONAL_COLOR_PROMPT,
-                "image": {
-                    "mime_type": "image/png",
-                    "data": image_base64,
-                },
-            }
-            if self.model:
-                payload["model"] = self.model
-            return payload
-
-        payload = {
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You are a personal color analysis assistant.",
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": GMS_PERSONAL_COLOR_PROMPT},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_base64}",
-                            },
-                        },
-                    ],
-                },
-            ],
-            "temperature": 0.2,
-            "response_format": {"type": "json_object"},
-        }
-        if self.model:
-            payload["model"] = self.model
-        return payload
-
-    def _raise_for_http_error(self, exc: urllib.error.HTTPError) -> None:
-        try:
-            response_body = exc.read().decode("utf-8", errors="replace")
-        except Exception:
-            response_body = ""
-
-        logger.warning(
-            "GMS API request failed: status=%s body=%s",
-            exc.code,
-            response_body[:1000],
-        )
-        raise AnalysisProviderUnavailableError(
-            "GMS API request failed.",
-            code="analysis_provider_unavailable",
-        ) from exc
-
-def _build_metrics(result_type: str, seed: int) -> dict[str, float]:
-    config = SEASON_CONFIGS[result_type]["metrics"]
-    rng = random.Random(seed ^ 0x5F3759DF)
-    return {
-        metric: _clamp(
-            round(base + (rng.random() - 0.5) * spread, 2),
-            0.0,
-            1.0,
-        )
-        for metric, (base, spread) in config.items()
-    }
-
-
-def _clamp(value: float, minimum: float, maximum: float) -> float:
-    return max(minimum, min(maximum, value))
+def _get_gms_timeout() -> float:
+    return max(_env_float("GMS_TIMEOUT_SECONDS", 30.0), 1.0)
 
 
 def _normalize_extension(filename: str) -> str:
@@ -662,13 +331,13 @@ def _normalize_to_png(image: Image.Image) -> bytes:
 def _ensure_within_dimension_bounds(width: int, height: int) -> None:
     if width < MIN_IMAGE_DIMENSION or height < MIN_IMAGE_DIMENSION:
         raise InvalidImageError(
-            "이미지 크기는 최소 256 x 256이어야 합니다.",
+            "Image dimensions must be at least 256 x 256 pixels.",
             code="image_too_small",
         )
 
     if width > MAX_IMAGE_DIMENSION or height > MAX_IMAGE_DIMENSION:
         raise InvalidImageError(
-            "이미지 크기는 최대 4096 x 4096을 초과할 수 없습니다.",
+            "Image dimensions must not exceed 4096 x 4096 pixels.",
             code="image_too_large",
         )
 
@@ -677,10 +346,892 @@ def _build_invalid_image_error(message: str, code: str) -> InvalidImageError:
     return InvalidImageError(message, code=code)
 
 
+def _strip_json_markdown(value: str) -> str:
+    text = value.strip()
+    if not text.startswith("```"):
+        return text
+
+    lines = text.splitlines()
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _parse_json_text(value: str) -> Any:
+    text = _strip_json_markdown(value)
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end > start:
+            try:
+                return json.loads(text[start : end + 1])
+            except json.JSONDecodeError:
+                pass
+
+        raise AnalysisFailedError(
+            "GMS analysis result was not valid JSON.",
+            code="analysis_result_invalid",
+        )
+
+
+def _textify(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, (str, int, float, bool)):
+        return str(value)
+    if isinstance(value, list):
+        for item in value:
+            text = _textify(item)
+            if text:
+                return text
+        return ""
+    if isinstance(value, dict):
+        for key in (
+            "text",
+            "summary",
+            "reason",
+            "이유",
+            "추천",
+            "recommendation",
+            "name",
+            "색상",
+            "label",
+            "title",
+            "content",
+        ):
+            if key in value:
+                text = _textify(value[key])
+                if text:
+                    return text
+        return ""
+    return str(value)
+
+
+def _extract_response_text(value: Any) -> str | None:
+    if isinstance(value, str):
+        return value
+
+    if isinstance(value, list):
+        for item in value:
+            text = _extract_response_text(item)
+            if text is not None:
+                return text
+        return None
+
+    if not isinstance(value, dict):
+        return None
+
+    if value.get("type") in {"output_text", "text"} and "text" in value:
+        text = _extract_response_text(value["text"])
+        if text is not None:
+            return text
+
+    for key in ("content", "text", "output_text"):
+        if key in value:
+            text = _extract_response_text(value[key])
+            if text is not None:
+                return text
+
+    message = value.get("message")
+    if isinstance(message, dict) and "content" in message:
+        text = _extract_response_text(message["content"])
+        if text is not None:
+            return text
+
+    output = value.get("output")
+    if output is not None:
+        text = _extract_response_text(output)
+        if text is not None:
+            return text
+
+    choices = value.get("choices")
+    if isinstance(choices, list) and choices:
+        first_choice = choices[0]
+        if isinstance(first_choice, dict):
+            return _extract_response_text(first_choice)
+
+    return None
+
+
+def _extract_gms_result(value: Any) -> Any:
+    if isinstance(value, str):
+        return _extract_gms_result(_parse_json_text(value))
+
+    if isinstance(value, list):
+        for item in value:
+            extracted = _extract_gms_result(item)
+            if extracted is not item:
+                return extracted
+        return value
+
+    if not isinstance(value, dict):
+        return value
+
+    if any(
+        key in value
+        for key in (
+            "result_type",
+            "resultType",
+            "season",
+            "personal_color",
+            "personalColor",
+            "추천색상",
+        )
+    ):
+        return value
+
+    response_text = _extract_response_text(value)
+    if response_text is not None and response_text != value:
+        return _extract_gms_result(response_text)
+
+    for key in ("result", "analysis", "data", "output", "content", "text"):
+        if key in value:
+            extracted = _extract_gms_result(value[key])
+            if extracted is not value[key] or isinstance(extracted, dict):
+                return extracted
+
+    return value
+
+
+def _normalize_gms_api_style(value: Any) -> str:
+    normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+    normalized = normalized.replace("/", "_")
+
+    if normalized in {"", "openai", "chat", "chat_completions"}:
+        return "chat"
+    if normalized in {"response", "responses"}:
+        return "responses"
+    return normalized
+
+
+def _resolve_gms_request_style(api_url: str, configured_style: str) -> str:
+    path = urlparse(api_url or "").path.rstrip("/").lower()
+
+    if path.endswith("/responses"):
+        return "responses"
+    if path.endswith("/chat/completions"):
+        return "chat"
+    return configured_style
+
+
+def _normalize_result_type_alias(value: Any) -> str:
+    normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
+
+    if normalized in RESULT_TYPE_ORDER:
+        return normalized
+    if "spring" in normalized or "봄" in normalized:
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+    if "summer" in normalized or "여름" in normalized:
+        return PersonalColorAnalysis.ResultType.SUMMER_COOL
+    if "autumn" in normalized or "fall" in normalized or "가을" in normalized:
+        return PersonalColorAnalysis.ResultType.AUTUMN_WARM
+    if "winter" in normalized or "겨울" in normalized:
+        return PersonalColorAnalysis.ResultType.WINTER_COOL
+    if "cool" in normalized or "쿨" in normalized:
+        if any(keyword in normalized for keyword in ("deep", "vivid", "clear", "winter", "블랙", "화이트", "차콜")):
+            return PersonalColorAnalysis.ResultType.WINTER_COOL
+        return PersonalColorAnalysis.ResultType.SUMMER_COOL
+    if "warm" in normalized or "웜" in normalized:
+        if any(keyword in normalized for keyword in ("autumn", "fall", "가을", "브라운", "카키", "올리브", "머스타드")):
+            return PersonalColorAnalysis.ResultType.AUTUMN_WARM
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+    return PersonalColorAnalysis.ResultType.SPRING_WARM
+
+
+def _season_preset(result_type: str) -> dict[str, Any]:
+    preset = SEASON_PRESETS.get(result_type) or SEASON_PRESETS[
+        PersonalColorAnalysis.ResultType.SPRING_WARM
+    ]
+    return {
+        "label": preset["label"],
+        "subtypes": list(preset["subtypes"]),
+        "summary": preset["summary"],
+        "best_colors": [dict(item) for item in preset["best_colors"]],
+        "avoid_colors": [dict(item) for item in preset["avoid_colors"]],
+        "recommendations": {
+            key: list(value)
+            for key, value in preset["recommendations"].items()
+        },
+        "analysis_metrics": dict(preset["analysis_metrics"]),
+    }
+
+
+def _default_reason_for_color(name: str, result_type: str) -> str:
+    preset = _season_preset(result_type)
+    if preset["best_colors"]:
+        return f"{name}은(는) {preset['label']}에 잘 어울리는 색입니다."
+    return f"{name}은(는) 개인 컬러 추천 색상입니다."
+
+
+def _guess_hex_from_text(text: str, result_type: str) -> str:
+    normalized = str(text or "").strip().lower()
+    keyword_map = [
+        ("코랄", "#F49A8A"),
+        ("피치", "#F7B18A"),
+        ("핑크", "#E6A7B5"),
+        ("라벤더", "#C8B5F5"),
+        ("보라", "#C8B5F5"),
+        ("퍼플", "#C8B5F5"),
+        ("블루", "#8EA4C8"),
+        ("하늘", "#8EA4C8"),
+        ("스카이", "#8EA4C8"),
+        ("민트", "#CDE8C8"),
+        ("연두", "#CDE8C8"),
+        ("그린", "#CDE8C8"),
+        ("그레이", "#B8BFC9"),
+        ("회색", "#B8BFC9"),
+        ("화이트", "#FFFFFF"),
+        ("흰", "#FFFFFF"),
+        ("블랙", "#2F343F"),
+        ("검정", "#2F343F"),
+        ("브라운", "#C19A6B"),
+        ("갈색", "#C19A6B"),
+        ("카멜", "#C19A6B"),
+        ("베이지", "#D8B58B"),
+        ("카키", "#6F7B3B"),
+        ("올리브", "#6F7B3B"),
+        ("옐로", "#F6D86B"),
+        ("노랑", "#F6D86B"),
+        ("오렌지", "#F58B64"),
+        ("레드", "#D63B9B"),
+        ("자홍", "#D63B9B"),
+        ("버건디", "#7A2E3A"),
+    ]
+
+    for keyword, hex_value in keyword_map:
+        if keyword in normalized:
+            return hex_value
+
+    preset = _season_preset(result_type)
+    best_colors = preset["best_colors"]
+    if best_colors:
+        return best_colors[0]["hex"]
+    return "#8EA4C8"
+
+
+def _select_text(source: dict[str, Any], keys: tuple[str, ...]) -> str:
+    for key in keys:
+        value = source.get(key)
+        text = _textify(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _normalize_color_entry(
+    item: Any,
+    *,
+    result_type: str,
+    field_name: str,
+) -> dict[str, str] | None:
+    if isinstance(item, str):
+        name = item.strip()
+        if not name:
+            return None
+        return color_item(
+            name,
+            _guess_hex_from_text(name, result_type),
+            _default_reason_for_color(name, result_type),
+        )
+
+    if not isinstance(item, dict):
+        return None
+
+    name = _select_text(item, ("name", "색상", "color", "label", "title"))
+    hex_value = _select_text(item, ("hex", "색상코드", "color_hex", "colorCode"))
+    reason = _select_text(
+        item,
+        ("reason", "이유", "description", "설명", "note", "추천"),
+    )
+
+    if not name and hex_value:
+        name = hex_value
+
+    if not name:
+        return None
+
+    if not hex_value:
+        hex_value = _guess_hex_from_text(name, result_type)
+    else:
+        hex_value = hex_value.upper()
+        if not hex_value.startswith("#") or len(hex_value) != 7:
+            hex_value = _guess_hex_from_text(name, result_type)
+
+    if not reason:
+        reason = _default_reason_for_color(name, result_type)
+
+    return color_item(name, hex_value, reason)
+
+
+def _normalize_color_entries(
+    value: Any,
+    *,
+    result_type: str,
+    field_name: str,
+    fallback: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    if value is None or value == "":
+        return [dict(item) for item in fallback]
+
+    items = value if isinstance(value, list) else [value]
+    normalized_entries: list[dict[str, str]] = []
+
+    for item in items:
+        normalized = _normalize_color_entry(
+            item,
+            result_type=result_type,
+            field_name=field_name,
+        )
+        if normalized is not None:
+            normalized_entries.append(normalized)
+
+    if not normalized_entries:
+        return [dict(item) for item in fallback]
+
+    return normalized_entries
+
+
+def _normalize_recommendations(
+    value: Any,
+    *,
+    fallback: dict[str, list[str]],
+    primary_text: str = "",
+) -> dict[str, list[str]]:
+    normalized = {
+        key: list(items)
+        for key, items in fallback.items()
+    }
+
+    if isinstance(value, dict):
+        for key in ("clothing", "makeup", "accessories"):
+            items = value.get(key)
+            if items is None:
+                continue
+            if isinstance(items, str):
+                items = [items]
+            if not isinstance(items, list):
+                continue
+
+            cleaned = []
+            for item in items:
+                text = _textify(item).strip()
+                if text:
+                    cleaned.append(text)
+
+            if cleaned:
+                normalized[key] = cleaned
+
+    if primary_text:
+        cleaned_primary = primary_text.strip()
+        if cleaned_primary and cleaned_primary not in normalized["clothing"]:
+            normalized["clothing"] = [cleaned_primary, *normalized["clothing"]]
+
+    return normalized
+
+
+def _normalize_metrics(value: Any, *, fallback: dict[str, float]) -> dict[str, float]:
+    if not isinstance(value, dict):
+        return dict(fallback)
+
+    normalized: dict[str, float] = {}
+    for key in ("warmth", "brightness", "saturation", "contrast"):
+        raw_value = value.get(key)
+        try:
+            metric_value = float(raw_value)
+        except (TypeError, ValueError):
+            metric_value = fallback[key]
+
+        if 0 <= metric_value <= 1:
+            normalized[key] = round(metric_value, 2)
+        elif 0 <= metric_value <= 100:
+            normalized[key] = round(metric_value / 100, 2)
+        else:
+            normalized[key] = fallback[key]
+
+    return normalized
+
+
+def _normalize_confidence(value: Any, *, default: float = 80.0) -> float:
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError):
+        return round(default, 2)
+
+    if 0 <= confidence <= 1:
+        confidence *= 100
+
+    if confidence < 0:
+        confidence = 0
+    if confidence > 100:
+        confidence = 100
+
+    return round(confidence, 2)
+
+
+def _build_primary_color_bundle(
+    bundle: Any,
+    *,
+    result_type: str,
+) -> list[dict[str, str]]:
+    if bundle is None:
+        return []
+
+    if isinstance(bundle, list):
+        source = bundle[0] if bundle else None
+    else:
+        source = bundle
+
+    normalized = _normalize_color_entry(
+        source,
+        result_type=result_type,
+        field_name="best_colors",
+    )
+    if normalized is None:
+        return []
+    return [normalized]
+
+
+def _infer_result_type_from_text(text: str) -> str:
+    normalized = str(text or "").strip().lower()
+    if not normalized:
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+
+    if "winter" in normalized or "겨울" in normalized:
+        return PersonalColorAnalysis.ResultType.WINTER_COOL
+    if "autumn" in normalized or "fall" in normalized or "가을" in normalized:
+        return PersonalColorAnalysis.ResultType.AUTUMN_WARM
+    if "spring" in normalized or "봄" in normalized:
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+    if "summer" in normalized or "여름" in normalized:
+        return PersonalColorAnalysis.ResultType.SUMMER_COOL
+
+    if "쿨" in normalized or "cool" in normalized:
+        if any(
+            keyword in normalized
+            for keyword in ("딥", "vivid", "clear", "블랙", "화이트", "차콜", "네이비")
+        ):
+            return PersonalColorAnalysis.ResultType.WINTER_COOL
+        return PersonalColorAnalysis.ResultType.SUMMER_COOL
+
+    if "웜" in normalized or "warm" in normalized:
+        if any(
+            keyword in normalized
+            for keyword in ("브라운", "카키", "올리브", "머스타드", "테라코타", "deep")
+        ):
+            return PersonalColorAnalysis.ResultType.AUTUMN_WARM
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+
+    if any(keyword in normalized for keyword in ("핑크", "코랄", "피치")):
+        return PersonalColorAnalysis.ResultType.SPRING_WARM
+
+    return PersonalColorAnalysis.ResultType.SPRING_WARM
+
+
+def _extract_primary_recommendation(result: dict[str, Any]) -> dict[str, Any] | None:
+    for key in (
+        "추천색상",
+        "recommendation",
+        "recommendations",
+        "best_color",
+        "bestColor",
+        "primary_color",
+    ):
+        candidate = result.get(key)
+        if candidate is None:
+            continue
+        if isinstance(candidate, list):
+            if not candidate:
+                continue
+            candidate = candidate[0]
+        if isinstance(candidate, dict):
+            return candidate
+        if isinstance(candidate, str):
+            return {"색상": candidate}
+    return None
+
+
+def _normalize_gms_result_shape(
+    value: Any,
+    *,
+    provider_name: str,
+    model_version: str,
+) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise AnalysisFailedError(
+            "GMS analysis result format was invalid.",
+            code="analysis_result_invalid",
+        )
+
+    result = dict(value)
+    aliases = {
+        "resultType": "result_type",
+        "resultSubtype": "result_subtype",
+        "subtype": "result_subtype",
+        "bestColors": "best_colors",
+        "avoidColors": "avoid_colors",
+        "analysisMetrics": "analysis_metrics",
+        "metrics": "analysis_metrics",
+        "providerName": "provider_name",
+        "modelVersion": "model_version",
+    }
+    for source, target in aliases.items():
+        if source in result and target not in result:
+            result[target] = result[source]
+
+    primary_bundle = _extract_primary_recommendation(result)
+    if "best_colors" not in result and primary_bundle is not None:
+        result["best_colors"] = [primary_bundle]
+
+    summary_source = _select_text(
+        result,
+        ("summary", "요약", "analysis_summary", "description"),
+    )
+    primary_reason = ""
+    if primary_bundle is not None:
+        primary_reason = _select_text(
+            primary_bundle,
+            ("reason", "이유", "recommendation", "추천", "description", "설명"),
+        )
+
+    color_name = ""
+    if primary_bundle is not None:
+        color_name = _select_text(
+            primary_bundle,
+            ("name", "색상", "color", "label", "title"),
+        )
+    if not color_name:
+        color_name = _select_text(
+            result,
+            ("result_subtype", "subtype", "추천색상", "best_color"),
+        )
+
+    if "result_type" in result:
+        result["result_type"] = _normalize_result_type_alias(result["result_type"])
+    else:
+        infer_text = " ".join(
+            text
+            for text in (
+                color_name,
+                summary_source,
+                _textify(primary_bundle),
+                _textify(result.get("best_colors")),
+            )
+            if text
+        )
+        result["result_type"] = _infer_result_type_from_text(infer_text)
+
+    preset = _season_preset(result["result_type"])
+
+    result["result_subtype"] = _select_text(
+        result,
+        ("result_subtype", "subtype", "resultSubtype"),
+    ) or color_name or preset["label"]
+
+    result["confidence"] = _normalize_confidence(
+        result.get("confidence"),
+        default=80.0,
+    )
+
+    summary = summary_source.strip()
+    if not summary:
+        if color_name and primary_bundle is not None:
+            summary = f"{color_name}이 잘 어울립니다."
+            if primary_reason:
+                summary = f"{summary} {primary_reason}"
+        else:
+            summary = preset["summary"]
+    result["summary"] = summary
+
+    result["best_colors"] = _normalize_color_entries(
+        result.get("best_colors"),
+        result_type=result["result_type"],
+        field_name="best_colors",
+        fallback=preset["best_colors"],
+    )
+
+    if not result["best_colors"] and color_name:
+        result["best_colors"] = _build_primary_color_bundle(
+            primary_bundle or {"색상": color_name},
+            result_type=result["result_type"],
+        )
+
+    result["avoid_colors"] = _normalize_color_entries(
+        result.get("avoid_colors"),
+        result_type=result["result_type"],
+        field_name="avoid_colors",
+        fallback=preset["avoid_colors"],
+    )
+
+    primary_recommendation_text = ""
+    if primary_bundle is not None:
+        primary_recommendation_text = _select_text(
+            primary_bundle,
+            ("recommendation", "추천", "reason", "이유", "description", "설명"),
+        )
+    result["recommendations"] = _normalize_recommendations(
+        result.get("recommendations"),
+        fallback=preset["recommendations"],
+        primary_text=primary_recommendation_text,
+    )
+
+    result["analysis_metrics"] = _normalize_metrics(
+        result.get("analysis_metrics"),
+        fallback=preset["analysis_metrics"],
+    )
+
+    result["provider_name"] = str(result.get("provider_name") or provider_name).strip()
+    result["model_version"] = str(result.get("model_version") or model_version).strip()
+
+    return result
+
+
+class MockPersonalColorProvider(PersonalColorProvider):
+    name = "mock"
+    model_version = "mock-v1"
+
+    def analyze(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
+        seed = int(prepared_image.sha256_hex, 16)
+        rng = random.Random(seed)
+        result_type = RESULT_TYPE_ORDER[seed % len(RESULT_TYPE_ORDER)]
+        preset = _season_preset(result_type)
+        subtype = rng.choice(preset["subtypes"])
+
+        best_colors = [dict(item) for item in preset["best_colors"]]
+        avoid_colors = [dict(item) for item in preset["avoid_colors"]]
+        rng.shuffle(best_colors)
+        rng.shuffle(avoid_colors)
+
+        return {
+            "result_type": result_type,
+            "result_subtype": subtype,
+            "confidence": round(78 + rng.random() * 18, 2),
+            "summary": preset["summary"],
+            "best_colors": best_colors,
+            "avoid_colors": avoid_colors,
+            "recommendations": {
+                key: list(value)
+                for key, value in preset["recommendations"].items()
+            },
+            "analysis_metrics": _build_metrics(result_type, seed),
+            "provider_name": self.name,
+            "model_version": self.model_version,
+        }
+
+
+class GmsPersonalColorProvider(PersonalColorProvider):
+    name = "gms"
+
+    def __init__(
+        self,
+        *,
+        api_url: str | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
+        api_style: str | None = None,
+        timeout: float | None = None,
+    ):
+        self.api_url = (api_url or str(_get_setting("GMS_API_URL", ""))).strip()
+        self.api_key = (api_key or str(_get_setting("GMS_API_KEY", ""))).strip()
+        self.model = (model or str(_get_setting("GMS_MODEL", ""))).strip()
+        configured_style = _normalize_gms_api_style(
+            api_style or str(_get_setting("GMS_API_STYLE", "chat")) or "chat"
+        )
+        self.api_style = configured_style
+        self.request_style = _resolve_gms_request_style(self.api_url, configured_style)
+        self.timeout = timeout or _get_gms_timeout()
+        self.model_version = self.model or "gms"
+
+        missing = []
+        if not self.api_url:
+            missing.append("GMS_API_URL")
+        if not self.api_key:
+            missing.append("GMS_API_KEY")
+        if not self.model:
+            missing.append("GMS_MODEL")
+
+        if missing:
+            raise AnalysisProviderUnavailableError(
+                f"GMS API configuration is missing: {', '.join(missing)}",
+                code="analysis_provider_unavailable",
+            )
+
+        if self.request_style not in {"chat", "responses"}:
+            raise AnalysisProviderUnavailableError(
+                f"Unsupported GMS API style: {self.request_style!r}",
+                code="analysis_provider_unavailable",
+            )
+
+    def analyze(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
+        payload = self._build_payload(prepared_image)
+
+        logger.info(
+            "Sending GMS personal color request: url=%s configured_style=%s request_style=%s model=%s",
+            self.api_url,
+            self.api_style,
+            self.request_style,
+            self.model or "<missing>",
+        )
+
+        request = urllib.request.Request(
+            self.api_url,
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers=self._build_headers(),
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                response_body = response.read()
+        except urllib.error.HTTPError as exc:
+            self._raise_for_http_error(exc)
+        except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+            raise AnalysisProviderUnavailableError(
+                "GMS API request failed.",
+                code="analysis_provider_unavailable",
+            ) from exc
+
+        try:
+            response_json = json.loads(response_body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise AnalysisFailedError(
+                "GMS API response was not valid JSON.",
+                code="analysis_result_invalid",
+            ) from exc
+
+        extracted = _extract_gms_result(response_json)
+        normalized = _normalize_gms_result_shape(
+            extracted,
+            provider_name=self.name,
+            model_version=self.model_version,
+        )
+        return validate_normalized_result(normalized)
+
+    def _build_headers(self) -> dict[str, str]:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        key_header = str(_get_setting("GMS_API_KEY_HEADER", "Authorization")).strip()
+        auth_prefix = str(_get_setting("GMS_API_AUTH_PREFIX", "Bearer")).strip()
+        if key_header:
+            value = self.api_key
+            if key_header.lower() == "authorization" and auth_prefix:
+                value = f"{auth_prefix} {self.api_key}"
+            headers[key_header] = value
+        return headers
+
+    def _build_payload(self, prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
+        image_url = _build_image_data_url(prepared_image)
+
+        if self.request_style == "responses":
+            return {
+                "model": self.model,
+                "input": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": GMS_PERSONAL_COLOR_PROMPT,
+                            },
+                            {
+                                "type": "input_image",
+                                "image_url": image_url,
+                            },
+                        ],
+                    }
+                ],
+            }
+
+        return {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": GMS_PERSONAL_COLOR_PROMPT,
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url,
+                                "detail": "low",
+                            },
+                        },
+                    ],
+                }
+            ],
+            "max_completion_tokens": DEFAULT_MAX_COMPLETION_TOKENS,
+        }
+
+    def _raise_for_http_error(self, exc: urllib.error.HTTPError) -> None:
+        try:
+            response_body = exc.read().decode("utf-8", errors="replace")
+        except Exception:
+            response_body = ""
+
+        logger.warning(
+            "GMS API request failed: status=%s body=%s",
+            exc.code,
+            response_body[:1000],
+        )
+
+        message = "GMS API request failed."
+        body_lower = response_body.lower()
+        if exc.code == 400 and "model not found" in body_lower:
+            message = (
+                "GMS API rejected the model for this domain. "
+                f"url={self.api_url} model={self.model or '<missing>'}."
+            )
+        elif exc.code == 403 and "target domain" in body_lower:
+            message = (
+                "GMS API rejected the target domain. "
+                f"url={self.api_url}."
+            )
+
+        raise AnalysisProviderUnavailableError(
+            message,
+            code="analysis_provider_unavailable",
+        ) from exc
+
+
+def _build_image_data_url(prepared_image: PreparedPersonalColorImage) -> str:
+    return f"data:image/png;base64,{base64.b64encode(prepared_image.normalized_bytes).decode('ascii')}"
+
+
+def _build_metrics(result_type: str, seed: int) -> dict[str, float]:
+    config = SEASON_PRESETS[result_type]["analysis_metrics"]
+    rng = random.Random(seed ^ 0x5F3759DF)
+    return {
+        metric: _clamp(
+            round(base + (rng.random() - 0.5) * spread, 2),
+            0.0,
+            1.0,
+        )
+        for metric, (base, spread) in {
+            "warmth": (config["warmth"], 0.08),
+            "brightness": (config["brightness"], 0.08),
+            "saturation": (config["saturation"], 0.08),
+            "contrast": (config["contrast"], 0.08),
+        }.items()
+    }
+
+
+def _clamp(value: float, minimum: float, maximum: float) -> float:
+    return max(minimum, min(maximum, value))
+
+
 def prepare_uploaded_image(image_file) -> PreparedPersonalColorImage:
     if image_file is None:
         raise _build_invalid_image_error(
-            "이미지 파일을 선택해 주세요.",
+            "An image file is required.",
             "image_required",
         )
 
@@ -691,31 +1242,31 @@ def prepare_uploaded_image(image_file) -> PreparedPersonalColorImage:
 
     if size <= 0:
         raise _build_invalid_image_error(
-            "이미지 파일을 확인할 수 없습니다.",
+            "The uploaded image is invalid.",
             "invalid_image",
         )
 
     if size > MAX_UPLOAD_SIZE_BYTES:
         raise _build_invalid_image_error(
-            "파일 크기는 10MB 이하여야 합니다.",
+            "The file must be 10MB or smaller.",
             "file_too_large",
         )
 
     if content_type not in ALLOWED_IMAGE_MIME_TYPES:
         raise _build_invalid_image_error(
-            "JPEG, PNG, WEBP 이미지 파일만 업로드할 수 있습니다.",
+            "Only JPEG, PNG, and WEBP images are supported.",
             "unsupported_image_type",
         )
 
     if extension not in ALLOWED_IMAGE_EXTENSIONS:
         raise _build_invalid_image_error(
-            "JPEG, PNG, WEBP 이미지 파일만 업로드할 수 있습니다.",
+            "Only JPEG, PNG, and WEBP images are supported.",
             "unsupported_image_type",
         )
 
     if extension not in MIME_TYPE_EXTENSIONS.get(content_type, set()):
         raise _build_invalid_image_error(
-            "파일 확장자와 MIME 형식이 일치하지 않습니다.",
+            "The file extension does not match the MIME type.",
             "image_type_mismatch",
         )
 
@@ -730,7 +1281,7 @@ def prepare_uploaded_image(image_file) -> PreparedPersonalColorImage:
 
     if len(raw_bytes) > MAX_UPLOAD_SIZE_BYTES:
         raise _build_invalid_image_error(
-            "파일 크기는 10MB 이하여야 합니다.",
+            "The file must be 10MB or smaller.",
             "file_too_large",
         )
 
@@ -739,7 +1290,7 @@ def prepare_uploaded_image(image_file) -> PreparedPersonalColorImage:
             preview_image.verify()
     except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise _build_invalid_image_error(
-            "손상된 이미지 파일입니다.",
+            "The image file is corrupted.",
             "corrupted_image",
         ) from exc
 
@@ -765,7 +1316,7 @@ def prepare_uploaded_image(image_file) -> PreparedPersonalColorImage:
         raise
     except (UnidentifiedImageError, OSError, ValueError) as exc:
         raise _build_invalid_image_error(
-            "손상된 이미지 파일입니다.",
+            "The image file is corrupted.",
             "corrupted_image",
         ) from exc
 
@@ -786,7 +1337,7 @@ def get_personal_color_provider() -> PersonalColorProvider:
         return MockPersonalColorProvider()
 
     raise AnalysisProviderUnavailableError(
-        "AI 분석 제공자가 설정되지 않았습니다.",
+        "AI analysis provider is not configured.",
         code="analysis_provider_unavailable",
     )
 
@@ -794,7 +1345,7 @@ def get_personal_color_provider() -> PersonalColorProvider:
 def validate_normalized_result(result: Any) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise AnalysisFailedError(
-            "분석 결과 형식이 올바르지 않습니다.",
+            "Personal color analysis result format was invalid.",
             code="analysis_result_invalid",
         )
 
@@ -814,28 +1365,60 @@ def validate_normalized_result(result: Any) -> dict[str, Any]:
     missing = sorted(required_keys - set(result))
     if missing:
         raise AnalysisFailedError(
-            "분석 결과에 필요한 항목이 누락되었습니다.",
+            "Personal color analysis result is missing required fields.",
             code="analysis_result_invalid",
         )
 
-    result_type = str(result["result_type"]).strip()
+    result_type = _normalize_result_type_alias(result["result_type"])
     if result_type not in RESULT_TYPE_ORDER:
         raise AnalysisFailedError(
-            "분석 결과 타입이 올바르지 않습니다.",
+            "Personal color analysis result type is invalid.",
             code="analysis_result_invalid",
         )
 
     result_subtype = str(result["result_subtype"]).strip()
     if not result_subtype:
         raise AnalysisFailedError(
-            "분석 결과 세부 타입이 비어 있습니다.",
+            "Personal color analysis result subtype is empty.",
             code="analysis_result_invalid",
         )
 
     summary = str(result["summary"]).strip()
     if not summary:
         raise AnalysisFailedError(
-            "분석 요약이 비어 있습니다.",
+            "Personal color analysis summary is empty.",
+            code="analysis_result_invalid",
+        )
+
+    best_colors = _normalize_color_entries(
+        result["best_colors"],
+        result_type=result_type,
+        field_name="best_colors",
+        fallback=[],
+    )
+    avoid_colors = _normalize_color_entries(
+        result["avoid_colors"],
+        result_type=result_type,
+        field_name="avoid_colors",
+        fallback=[],
+    )
+    recommendations = _normalize_recommendations(
+        result["recommendations"],
+        fallback={key: [] for key in ("clothing", "makeup", "accessories")},
+    )
+    analysis_metrics = _normalize_metrics(
+        result["analysis_metrics"],
+        fallback={
+            "warmth": 0.5,
+            "brightness": 0.5,
+            "saturation": 0.5,
+            "contrast": 0.5,
+        },
+    )
+
+    if not best_colors:
+        raise AnalysisFailedError(
+            "Personal color analysis best colors are missing.",
             code="analysis_result_invalid",
         )
 
@@ -844,10 +1427,10 @@ def validate_normalized_result(result: Any) -> dict[str, Any]:
         "result_subtype": result_subtype,
         "confidence": _normalize_confidence(result["confidence"]),
         "summary": summary,
-        "best_colors": _normalize_color_entries(result["best_colors"], "best_colors"),
-        "avoid_colors": _normalize_color_entries(result["avoid_colors"], "avoid_colors"),
-        "recommendations": _normalize_recommendations(result["recommendations"]),
-        "analysis_metrics": _normalize_metrics(result["analysis_metrics"]),
+        "best_colors": best_colors,
+        "avoid_colors": avoid_colors,
+        "recommendations": recommendations,
+        "analysis_metrics": analysis_metrics,
         "provider_name": str(result["provider_name"]).strip(),
         "model_version": str(result["model_version"]).strip(),
     }
@@ -855,145 +1438,9 @@ def validate_normalized_result(result: Any) -> dict[str, Any]:
     return normalized
 
 
-def _normalize_confidence(value: Any) -> float:
-    try:
-        confidence = float(value)
-    except (TypeError, ValueError) as exc:
-        raise AnalysisFailedError(
-            "신뢰도 값이 올바르지 않습니다.",
-            code="analysis_result_invalid",
-        ) from exc
-
-    if confidence < 0 or confidence > 100:
-        raise AnalysisFailedError(
-            "신뢰도는 0에서 100 사이여야 합니다.",
-            code="analysis_result_invalid",
-        )
-
-    return round(confidence, 2)
-
-
-def _normalize_color_entries(value: Any, field_name: str) -> list[dict[str, str]]:
-    if not isinstance(value, list):
-        raise AnalysisFailedError(
-            f"{field_name} 형식이 올바르지 않습니다.",
-            code="analysis_result_invalid",
-        )
-
-    normalized_entries: list[dict[str, str]] = []
-    for item in value:
-        if not isinstance(item, dict):
-            raise AnalysisFailedError(
-                f"{field_name} 항목 형식이 올바르지 않습니다.",
-                code="analysis_result_invalid",
-            )
-
-        name = str(item.get("name", "")).strip()
-        hex_value = str(item.get("hex", "")).strip().upper()
-        reason = str(item.get("reason", "")).strip()
-
-        if not name or not hex_value or not reason:
-            raise AnalysisFailedError(
-                f"{field_name} 항목이 비어 있습니다.",
-                code="analysis_result_invalid",
-            )
-
-        if not _is_valid_hex_color(hex_value):
-            raise AnalysisFailedError(
-                f"{field_name} 색상 코드가 올바르지 않습니다.",
-                code="analysis_result_invalid",
-            )
-
-        normalized_entries.append(
-            {
-                "name": name,
-                "hex": hex_value,
-                "reason": reason,
-            }
-        )
-
-    return normalized_entries
-
-
-def _is_valid_hex_color(value: str) -> bool:
-    if len(value) != 7 or not value.startswith("#"):
-        return False
-
-    try:
-        int(value[1:], 16)
-    except ValueError:
-        return False
-
-    return True
-
-
-def _normalize_recommendations(value: Any) -> dict[str, list[str]]:
-    if not isinstance(value, dict):
-        raise AnalysisFailedError(
-            "recommendations 형식이 올바르지 않습니다.",
-            code="analysis_result_invalid",
-        )
-
-    normalized: dict[str, list[str]] = {}
-    for key in ("clothing", "makeup", "accessories"):
-        items = value.get(key)
-        if not isinstance(items, list):
-            raise AnalysisFailedError(
-                f"recommendations.{key} 형식이 올바르지 않습니다.",
-                code="analysis_result_invalid",
-            )
-
-        normalized[key] = []
-        for item in items:
-            text = str(item).strip()
-            if not text:
-                raise AnalysisFailedError(
-                    f"recommendations.{key} 항목이 비어 있습니다.",
-                    code="analysis_result_invalid",
-                )
-            normalized[key].append(text)
-
-    return normalized
-
-
-def _normalize_metrics(value: Any) -> dict[str, float]:
-    if not isinstance(value, dict):
-        raise AnalysisFailedError(
-            "analysis_metrics 형식이 올바르지 않습니다.",
-            code="analysis_result_invalid",
-        )
-
-    normalized: dict[str, float] = {}
-    for key in ("warmth", "brightness", "saturation", "contrast"):
-        if key not in value:
-            raise AnalysisFailedError(
-                f"analysis_metrics.{key} 값이 없습니다.",
-                code="analysis_result_invalid",
-            )
-
-        try:
-            metric_value = float(value[key])
-        except (TypeError, ValueError) as exc:
-            raise AnalysisFailedError(
-                f"analysis_metrics.{key} 값이 올바르지 않습니다.",
-                code="analysis_result_invalid",
-            ) from exc
-
-        if metric_value < 0 or metric_value > 1:
-            raise AnalysisFailedError(
-                f"analysis_metrics.{key} 값은 0에서 1 사이여야 합니다.",
-                code="analysis_result_invalid",
-            )
-
-        normalized[key] = round(metric_value, 2)
-
-    return normalized
-
-
 def analyze_prepared_image(prepared_image: PreparedPersonalColorImage) -> dict[str, Any]:
     provider = get_personal_color_provider()
 
-    # Real providers can opt into face detection later.
     if getattr(provider, "supports_face_detection", False):
         provider.ensure_face_present(prepared_image)
 
@@ -1003,14 +1450,27 @@ def analyze_prepared_image(prepared_image: PreparedPersonalColorImage) -> dict[s
         InvalidImageError,
         FaceNotDetectedError,
         AnalysisProviderUnavailableError,
-        AnalysisFailedError,
     ):
+        raise
+    except AnalysisFailedError as exc:
+        if getattr(provider, "name", "") == "gms":
+            logger.warning("GMS API returned invalid analysis result: %s", exc.message)
+            raise AnalysisProviderUnavailableError(
+                exc.message,
+                code=exc.code,
+            ) from exc
         raise
     except Exception as exc:
         raise AnalysisFailedError(
-            "분석 요청을 처리하지 못했습니다.",
+            "Personal color analysis request failed.",
             code="analysis_failed",
         ) from exc
+
+    if not isinstance(raw_result, dict):
+        raise AnalysisFailedError(
+            "Personal color analysis result format was invalid.",
+            code="analysis_result_invalid",
+        )
 
     try:
         return validate_normalized_result(raw_result)
@@ -1063,4 +1523,3 @@ def create_personal_color_analysis(
         user=user,
         **build_analysis_model_kwargs(normalized_result),
     )
-
