@@ -15,7 +15,7 @@ from accounts.models import User, UserProfile
 
 from .models import PersonalColorAnalysis
 from .exceptions import AnalysisFailedError, AnalysisProviderUnavailableError
-from .services import (
+from .services_VER2 import (
     GmsPersonalColorProvider,
     get_personal_color_provider,
     prepare_uploaded_image,

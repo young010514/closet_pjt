@@ -1,4 +1,4 @@
-# Created by https://www.toptal.com/developers/gitignore/api/python,django,venv,windows,vuejs,vue
+﻿# Created by https://www.toptal.com/developers/gitignore/api/python,django,venv,windows,vuejs,vue
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,django,venv,windows,vuejs,vue
 
 ### Django ###
@@ -323,12 +323,12 @@ $RECYCLE.BIN/
 
 codex-history.md
 
-# Claude 관련 파일 및 기획 문서 제외
+# Claude 愿???뚯씪 諛?湲고쉷 臾몄꽌 ?쒖쇅
 .claude/
 CLAUDE.md
 closet_pjt_PRD.md
 closet_pjt_Spec.md
-PHASE/
 
 closet/.env
 .docs/
+test.txt
