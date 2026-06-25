@@ -154,14 +154,11 @@ const historyPageItems = computed(() =>
   buildPageItems(historyPage.value, historyPageCount.value),
 )
 
-const bestColors = computed(() =>
-  Array.isArray(activeAnalysis.value?.best_colors) ? activeAnalysis.value.best_colors : [],
-)
+const HEX_COLOR_PATTERN = /^#[0-9a-f]{6}$/i
 
-const avoidColors = computed(() =>
-  Array.isArray(activeAnalysis.value?.avoid_colors) ? activeAnalysis.value.avoid_colors : [],
-)
+const bestColors = computed(() => normalizeColorList(activeAnalysis.value?.best_colors, 'best'))
 
+const avoidColors = computed(() => normalizeColorList(activeAnalysis.value?.avoid_colors, 'avoid'))
 const recommendations = computed(() => {
   const source = activeAnalysis.value?.recommendations || {}
 
@@ -296,13 +293,52 @@ function getRecordTheme(record) {
   return RESULT_THEMES[record?.result_type] ?? RESULT_THEMES.spring_warm
 }
 
+function normalizeColorItem(value, index, prefix) {
+  if (value === null || value === undefined || value === '') return null
+
+  if (typeof value !== 'object') {
+    const name = String(value).trim()
+    if (!name) return null
+
+    return {
+      id: `${prefix}-${index}-${name}`,
+      name,
+      hex: '',
+      reason: '',
+      hasValidHex: false,
+    }
+  }
+
+  const rawName = value.name ?? value.color ?? value.label ?? ''
+  const rawHex = String(value.hex ?? value.code ?? '').trim()
+  const hasValidHex = HEX_COLOR_PATTERN.test(rawHex)
+  const name = String(rawName || rawHex || `Color ${index + 1}`).trim()
+  const reason = String(value.reason ?? value.description ?? '').trim()
+
+  return {
+    id: `${prefix}-${index}-${name}-${hasValidHex ? rawHex : 'no-hex'}`,
+    name,
+    hex: hasValidHex ? rawHex : '',
+    reason,
+    hasValidHex,
+  }
+}
+
+function normalizeColorList(value, prefix) {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item, index) => normalizeColorItem(item, index, prefix))
+    .filter(Boolean)
+}
+
 function getRepresentativeColor(record) {
-  const color = Array.isArray(record?.best_colors) ? record.best_colors[0] : null
+  const [color] = normalizeColorList(record?.best_colors, 'history')
   return color || null
 }
 
 function getClipboardText(color) {
-  return `${color?.name || '색상'} ${color?.hex || ''}`.trim()
+  return [color?.name, color?.hex].filter(Boolean).join(' ')
 }
 
 function updatePreview(file) {
@@ -953,17 +989,22 @@ onBeforeUnmount(() => {
               <div class="color-list">
                 <article
                   v-for="color in bestColors"
-                  :key="`best-${color.hex}`"
+                  :key="color.id"
                   class="color-card color-card--positive"
                 >
-                  <div class="color-card__swatch" :style="{ backgroundColor: color.hex }" aria-hidden="true" />
+                  <div
+                    class="color-card__swatch"
+                    :style="{ backgroundColor: color.hasValidHex ? color.hex : 'var(--color-surface-muted)' }"
+                    aria-hidden="true"
+                  />
                   <div class="color-card__body">
                     <div class="color-card__topline">
                       <strong>{{ color.name }}</strong>
-                      <span>{{ color.hex }}</span>
+                      <span v-if="color.hasValidHex">{{ color.hex }}</span>
                     </div>
-                    <p>{{ color.reason }}</p>
+                    <p v-if="color.reason">{{ color.reason }}</p>
                     <button
+                      v-if="color.hasValidHex"
                       type="button"
                       class="mini-button color-card__copy"
                       :aria-label="`${color.name} HEX 코드 복사`"
@@ -984,17 +1025,22 @@ onBeforeUnmount(() => {
               <div class="color-list">
                 <article
                   v-for="color in avoidColors"
-                  :key="`avoid-${color.hex}`"
+                  :key="color.id"
                   class="color-card color-card--negative"
                 >
-                  <div class="color-card__swatch" :style="{ backgroundColor: color.hex }" aria-hidden="true" />
+                  <div
+                    class="color-card__swatch"
+                    :style="{ backgroundColor: color.hasValidHex ? color.hex : 'var(--color-surface-muted)' }"
+                    aria-hidden="true"
+                  />
                   <div class="color-card__body">
                     <div class="color-card__topline">
                       <strong>{{ color.name }}</strong>
-                      <span>{{ color.hex }}</span>
+                      <span v-if="color.hasValidHex">{{ color.hex }}</span>
                     </div>
-                    <p>{{ color.reason }}</p>
+                    <p v-if="color.reason">{{ color.reason }}</p>
                     <button
+                      v-if="color.hasValidHex"
                       type="button"
                       class="mini-button color-card__copy"
                       :aria-label="`${color.name} HEX 코드 복사`"

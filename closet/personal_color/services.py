@@ -23,17 +23,20 @@ GMS_PERSONAL_COLOR_JSON_PROMPT = (
     "Return only valid JSON. No markdown. No explanation. "
     "Analyze this face image for personal color. Use Korean text except result_type. "
     "Keep every value concise. "
-    "JSON keys: result_type, confidence, summary, best_colors, worst_colors, recommendations. "
+    "JSON keys: result_type, confidence, summary, best_colors, avoid_colors, recommendations. "
     "result_type must be exactly one of: spring_warm, summer_cool, autumn_warm, winter_cool. "
     "confidence must be a number from 0 to 100. "
-    "best_colors must be an array of 5 strings. "
-    "worst_colors must be an array of 5 strings. "
+    "best_colors must be an array of 5 Korean color objects. "
+    "avoid_colors must be an array of 5 Korean color objects. "
+    'Each color object must be {"name":"string","hex":"#RRGGBB","reason":"string"}. '
+    "hex must be a valid 6-digit HEX color used for UI swatches and copy buttons. "
     "recommendations must be an object with keys: clothing, makeup, accessories. "
     "recommendations.clothing must be an array of 3 Korean strings for clothing styles and colors. "
     "recommendations.makeup must be an array of 3 Korean strings for makeup colors and tones. "
     "recommendations.accessories must be an array of 3 Korean strings for accessories, jewelry, or styling items. "
-    'Return this exact JSON shape: {"result_type":"spring_warm","confidence":90,'
-    '"summary":"string","best_colors":["string"],"worst_colors":["string"],'
+    'Return this JSON shape with 5 best_colors and 5 avoid_colors: {"result_type":"spring_warm","confidence":90,'
+    '"summary":"string","best_colors":[{"name":"string","hex":"#RRGGBB","reason":"string"}],'
+    '"avoid_colors":[{"name":"string","hex":"#RRGGBB","reason":"string"}],'
     '"recommendations":{"clothing":["string","string","string"],'
     '"makeup":["string","string","string"],'
     '"accessories":["string","string","string"]}}'
