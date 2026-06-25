@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .exceptions import InvalidImageError
 from .models import PersonalColorAnalysis
-from .services import (
+from .services_VER2 import (
     create_personal_color_analysis,
     prepare_uploaded_image,
 )
